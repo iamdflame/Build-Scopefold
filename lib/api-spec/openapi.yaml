@@ -3,13 +3,27 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Scopefold provenance-first operations API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: workspace
+    description: Demo workspace and settings
+  - name: projects
+    description: Projects and their operational state
+  - name: review
+    description: Contract evidence and obligations
+  - name: fold
+    description: Deterministic contract transformation
+  - name: operations
+    description: Folded operational objects
+  - name: launches
+    description: Provider actions and immutable receipts
+  - name: portal
+    description: Client-facing project portal
 paths:
   /healthz:
     get:
@@ -24,7 +38,209 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /v1/bootstrap:
+    get:
+      operationId: getBootstrap
+      tags: [workspace]
+      summary: Load the isolated demo workspace
+      responses:
+        "200":
+          description: Bootstrap payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bootstrap"
+  /v1/projects:
+    get:
+      operationId: listProjects
+      tags: [projects]
+      summary: List projects in the current workspace
+      parameters:
+        - name: q
+          in: query
+          schema: { type: string }
+        - name: lifecycle
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: Project ledger
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Project" }
+  /v1/projects/{projectId}:
+    get:
+      operationId: getProject
+      tags: [projects]
+      summary: Get a project with its source and operations
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: Project detail
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProjectDetail" }
+  /v1/projects/{projectId}/review:
+    get:
+      operationId: getProjectReview
+      tags: [review]
+      summary: Get contract evidence, obligations, and ambiguities
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: Review workspace
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReviewWorkspace" }
+  /v1/projects/{projectId}/review/ambiguity:
+    post:
+      operationId: resolveAmbiguity
+      tags: [review]
+      summary: Resolve a blocking contract ambiguity
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AmbiguityResolution" }
+      responses:
+        "200":
+          description: Updated review workspace
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReviewWorkspace" }
+  /v1/projects/{projectId}/fold/preview:
+    get:
+      operationId: getFoldPreview
+      tags: [fold]
+      summary: Preview deterministic downstream operations
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: Fold preview
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FoldPreview" }
+  /v1/projects/{projectId}/fold:
+    post:
+      operationId: commitFold
+      tags: [fold]
+      summary: Fold reviewed obligations into operations
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: Fold result
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FoldResult" }
+  /v1/projects/{projectId}/operations:
+    get:
+      operationId: getOperations
+      tags: [operations]
+      summary: List operational objects for a project
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: Operations
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OperationsWorkspace" }
+  /v1/projects/{projectId}/launch/preflight:
+    get:
+      operationId: getLaunchPreflight
+      tags: [launches]
+      summary: Inspect provider capability and launch actions
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: Launch preflight
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LaunchPreflight" }
+  /v1/projects/{projectId}/launch:
+    post:
+      operationId: launchProject
+      tags: [launches]
+      summary: Execute independent provider actions
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LaunchInput" }
+      responses:
+        "200":
+          description: Launch receipts
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LaunchResult" }
+  /v1/projects/{projectId}/portal:
+    get:
+      operationId: getPortal
+      tags: [portal]
+      summary: Get client portal view
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: Portal view
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PortalView" }
+  /v1/settings:
+    get:
+      operationId: getBrandSettings
+      tags: [workspace]
+      summary: Get workspace brand settings
+      responses:
+        "200":
+          description: Brand settings
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BrandSettings" }
+    patch:
+      operationId: updateBrandSettings
+      tags: [workspace]
+      summary: Update workspace brand settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BrandSettingsUpdate" }
+      responses:
+        "200":
+          description: Updated settings
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BrandSettings" }
+  /v1/demo/reset:
+    post:
+      operationId: resetDemo
+      tags: [workspace]
+      summary: Reset the isolated demo workspace
+      responses:
+        "200":
+          description: Fresh bootstrap payload
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Bootstrap" }
 components:
+  parameters:
+    ProjectId:
+      name: projectId
+      in: path
+      required: true
+      schema: { type: string }
   schemas:
     HealthStatus:
       type: object
@@ -33,4 +249,213 @@ components:
           type: string
       required:
         - status
+    Client:
+      type: object
+      required: [id, name]
+      properties:
+        id: { type: string }
+        name: { type: string }
+    Project:
+      type: object
+      required: [id, client, name, valueCents, currency, lifecycle, progress, evidenceCompleteness, nextEvent, risk]
+      properties:
+        id: { type: string }
+        client: { $ref: "#/components/schemas/Client" }
+        name: { type: string }
+        valueCents: { type: number }
+        currency: { type: string }
+        lifecycle: { type: string }
+        progress: { type: number }
+        evidenceCompleteness: { type: number }
+        nextEvent: { type: string }
+        risk: { type: string }
+    Evidence:
+      type: object
+      required: [id, clause, page, quote, classification, source]
+      properties:
+        id: { type: string }
+        clause: { type: string }
+        page: { type: number }
+        quote: { type: string }
+        classification: { type: string }
+        source: { type: string }
+        reviewed: { type: boolean }
+    Obligation:
+      type: object
+      required: [id, title, type, evidenceId, status]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        type: { type: string }
+        evidenceId: { type: string }
+        status: { type: string }
+        amountCents: { type: ["number", "null"] }
+        dueDate: { type: ["string", "null"] }
+    Ambiguity:
+      type: object
+      required: [id, question, quote, options, resolved]
+      properties:
+        id: { type: string }
+        question: { type: string }
+        quote: { type: string }
+        options:
+          type: array
+          items:
+            type: object
+            required: [id, title, summary, impact]
+            properties:
+              id: { type: string }
+              title: { type: string }
+              summary: { type: string }
+              impact: { type: string }
+        resolved: { type: ["string", "null"] }
+    ReviewWorkspace:
+      type: object
+      required: [project, documentName, documentText, evidence, obligations, ambiguities]
+      properties:
+        project: { $ref: "#/components/schemas/Project" }
+        documentName: { type: string }
+        documentText: { type: string }
+        evidence: { type: array, items: { $ref: "#/components/schemas/Evidence" } }
+        obligations: { type: array, items: { $ref: "#/components/schemas/Obligation" } }
+        ambiguities: { type: array, items: { $ref: "#/components/schemas/Ambiguity" } }
+    Operation:
+      type: object
+      required: [id, title, type, status, sourceEvidenceId]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        type: { type: string }
+        status: { type: string }
+        sourceEvidenceId: { type: string }
+        dueDate: { type: ["string", "null"] }
+        amountCents: { type: ["number", "null"] }
+        detail: { type: string }
+    FoldPreview:
+      type: object
+      required: [blocked, milestones, tasks, payments, approvals, dependencies, risks, revisionPlan, evidenceCompleteness]
+      properties:
+        blocked: { type: boolean }
+        milestones: { type: number }
+        tasks: { type: number }
+        payments: { type: number }
+        approvals: { type: number }
+        dependencies: { type: number }
+        risks: { type: array, items: { type: string } }
+        revisionPlan: { type: string }
+        evidenceCompleteness: { type: number }
+    FoldResult:
+      type: object
+      required: [project, operations, preview]
+      properties:
+        project: { $ref: "#/components/schemas/Project" }
+        operations: { type: array, items: { $ref: "#/components/schemas/Operation" } }
+        preview: { $ref: "#/components/schemas/FoldPreview" }
+    ProjectDetail:
+      type: object
+      required: [project, operations, receipts]
+      properties:
+        project: { $ref: "#/components/schemas/Project" }
+        operations: { type: array, items: { $ref: "#/components/schemas/Operation" } }
+        receipts: { type: array, items: { $ref: "#/components/schemas/Receipt" } }
+    OperationsWorkspace:
+      type: object
+      required: [project, milestones, operations, receipts]
+      properties:
+        project: { $ref: "#/components/schemas/Project" }
+        milestones: { type: array, items: { $ref: "#/components/schemas/Operation" } }
+        operations: { type: array, items: { $ref: "#/components/schemas/Operation" } }
+        receipts: { type: array, items: { $ref: "#/components/schemas/Receipt" } }
+    Provider:
+      type: object
+      required: [name, mode, state, action]
+      properties:
+        name: { type: string }
+        mode: { type: string }
+        state: { type: string }
+        action: { type: string }
+        destination: { type: string }
+        objectCount: { type: number }
+    LaunchPreflight:
+      type: object
+      required: [project, providers, blocked]
+      properties:
+        project: { $ref: "#/components/schemas/Project" }
+        providers: { type: array, items: { $ref: "#/components/schemas/Provider" } }
+        blocked: { type: boolean }
+    LaunchInput:
+      type: object
+      required: [idempotencyKey]
+      properties:
+        idempotencyKey: { type: string, minLength: 8 }
+    Receipt:
+      type: object
+      required: [id, provider, mode, action, status, timestamp, sourceQuote, page, proof]
+      properties:
+        id: { type: string }
+        provider: { type: string }
+        mode: { type: string }
+        action: { type: string }
+        status: { type: string }
+        timestamp: { type: string }
+        sourceQuote: { type: string }
+        page: { type: number }
+        externalUrl: { type: ["string", "null"] }
+        proof: { type: array, items: { type: string } }
+    LaunchResult:
+      type: object
+      required: [status, receipts]
+      properties:
+        status: { type: string }
+        receipts: { type: array, items: { $ref: "#/components/schemas/Receipt" } }
+    PortalView:
+      type: object
+      required: [project, milestones, payments, approvals, files]
+      properties:
+        project: { $ref: "#/components/schemas/Project" }
+        milestones: { type: array, items: { $ref: "#/components/schemas/Operation" } }
+        payments: { type: array, items: { $ref: "#/components/schemas/Operation" } }
+        approvals: { type: array, items: { $ref: "#/components/schemas/Operation" } }
+        files: { type: array, items: { type: string } }
+    BrandSettings:
+      type: object
+      required: [agencyName, brandName, primaryColor, evidenceColor, currency, clientTerm, projectTerm, milestoneTerm]
+      properties:
+        agencyName: { type: string }
+        brandName: { type: string }
+        primaryColor: { type: string }
+        evidenceColor: { type: string }
+        currency: { type: string }
+        clientTerm: { type: string }
+        projectTerm: { type: string }
+        milestoneTerm: { type: string }
+    BrandSettingsUpdate:
+      type: object
+      properties:
+        agencyName: { type: string }
+        brandName: { type: string }
+        primaryColor: { type: string }
+        evidenceColor: { type: string }
+        currency: { type: string }
+        clientTerm: { type: string }
+        projectTerm: { type: string }
+        milestoneTerm: { type: string }
+    AmbiguityResolution:
+      type: object
+      required: [ambiguityId, optionId]
+      properties:
+        ambiguityId: { type: string }
+        optionId: { type: string }
+    Bootstrap:
+      type: object
+      required: [workspace, projects, settings]
+      properties:
+        workspace:
+          type: object
+          required: [name, mode]
+          properties:
+            name: { type: string }
+            mode: { type: string }
+        projects: { type: array, items: { $ref: "#/components/schemas/Project" } }
+        settings: { $ref: "#/components/schemas/BrandSettings" }
 

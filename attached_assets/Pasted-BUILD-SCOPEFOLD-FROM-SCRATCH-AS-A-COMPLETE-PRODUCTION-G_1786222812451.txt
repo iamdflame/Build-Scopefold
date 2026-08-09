@@ -1,0 +1,1803 @@
+BUILD SCOPEFOLD FROM SCRATCH AS A COMPLETE, PRODUCTION-GRADE REPLIT TEMPLATE
+
+Do not merely plan, prototype, or create placeholder screens. Inspect the empty Replit project, create an implementation plan internally, and then execute the complete build. Do not ask clarifying questions. Make conservative engineering decisions consistent with this specification.
+
+Continue through implementation, database setup, seed data, integrations, testing, responsive inspection, accessibility verification, production build, and documentation. Do not stop after scaffolding or after the first successful preview.
+
+PRODUCT
+
+Name: Scopefold
+
+Tagline: Turn signed scopes into working client operations.
+
+Audience:
+- Agencies
+- Consultants
+- Freelancers
+- Studios
+- Professional service teams
+
+CORE PROBLEM
+
+Signed scopes of work contain deliverables, obligations, approvals, dependencies, dates, revision limits, and payment terms. After signature, teams manually rebuild that information across project-management, payment, email, and client-portal tools. Important contract language becomes disconnected from daily execution.
+
+SOLUTION
+
+Scopefold transforms a signed scope into:
+
+- Reviewed obligations
+- Milestones
+- Tasks
+- Dependencies
+- Payment requests
+- Client approvals
+- Client portal views
+- External execution through Stripe, Resend, and Linear
+- Immutable execution receipts
+- A complete proof chain back to the original contract language
+
+The defining chain is:
+
+SOURCE CLAUSE
+→ REVIEWED OBLIGATION
+→ OPERATIONAL OBJECT
+→ EXTERNAL ACTION
+→ IMMUTABLE RECEIPT
+
+Every operational object must answer:
+
+“Why does this exist?”
+
+Every external receipt must answer:
+
+“What exact contract language authorized this action?”
+
+This provenance chain is Scopefold’s primary innovation. Do not reduce Scopefold to a generic project-management dashboard, PDF summarizer, AI wrapper, or contract checklist.
+
+NON-NEGOTIABLE PRODUCT PRINCIPLES
+
+1. The complete demo works with zero API keys.
+2. Simulated actions are always labeled Simulated.
+3. Missing credentials never block startup.
+4. Configured provider failures never silently fall back to fake success.
+5. Human review is required before contract interpretation becomes operational work.
+6. Every generated operation has source evidence.
+7. Successful external writes are never rolled back because another provider failed.
+8. Every remix starts with rich deterministic sample data.
+9. The app must be useful before authentication or connector setup.
+10. There must be no marketing landing page. Open directly into the working product.
+
+TECHNICAL ARCHITECTURE
+
+Build one deployable TypeScript application.
+
+Use:
+
+- Node.js 22
+- TypeScript with strict mode
+- React
+- Vite
+- React Router
+- Express
+- PostgreSQL from Replit Database
+- Drizzle ORM and checked-in SQL migrations
+- Zod for runtime request and response validation
+- TanStack Query for server state
+- React Hook Form for forms
+- Radix UI primitives where accessible behavior is complex
+- Lucide React icons
+- Motion for the signature transformation only
+- PDF.js or another maintained server-compatible PDF text parser
+- @replit/object-storage for persistent uploaded documents
+- Official Stripe Node SDK
+- Official Resend Node SDK
+- Official Linear TypeScript SDK
+- Vitest
+- Testing Library
+- Playwright
+- axe-core
+- Helmet
+- express-rate-limit
+- Pino with secret redaction
+
+Do not use:
+
+- Next.js
+- Firebase
+- Supabase
+- Prisma
+- Redis
+- A separate worker service
+- A service-heavy monorepo
+- Paid Replit Connectors
+- Replit AI Integrations
+- A required external AI provider
+- Browser-side provider secrets
+- Local filesystem writes for persistent data
+
+Use npm with package-lock.json. Keep one package.json.
+
+REPOSITORY STRUCTURE
+
+Use a clear ownership structure similar to:
+
+src/
+  client/
+    app/
+    components/
+    features/
+    routes/
+    styles/
+  server/
+    auth/
+    db/
+    domain/
+    http/
+    jobs/
+    providers/
+    repositories/
+    security/
+  shared/
+    contracts/
+    schemas/
+    types/
+db/
+  migrations/
+  schema/
+  seed/
+public/
+tests/
+  unit/
+  integration/
+  browser/
+docs/
+  screenshots/
+
+Add strategic // CUSTOMIZE: comments only to:
+
+- Theme tokens
+- Seed story
+- Fold policy
+- Provider defaults
+- Email content
+
+RUNTIME
+
+Use one Express process.
+
+Development:
+- Express hosts Vite in middleware mode.
+- npm run dev starts the entire app.
+- Bind to 0.0.0.0.
+- Use process.env.PORT with 5000 as fallback.
+
+Production:
+- Vite compiles the client.
+- TypeScript compiles the server.
+- Express serves API routes and compiled client assets.
+- All SPA routes refresh correctly.
+- npm start runs the exact built server output.
+- The production server applies migrations and idempotent seed setup under a PostgreSQL advisory lock before accepting traffic.
+
+Add:
+
+GET /api/health
+
+Response:
+
+{
+  "status": "ok",
+  "service": "scopefold"
+}
+
+Add a readiness endpoint that verifies database access without returning secrets.
+
+Required scripts:
+
+- npm run dev
+- npm run typecheck
+- npm run lint
+- npm run format:check
+- npm run db:migrate
+- npm run db:seed
+- npm run test
+- npm run test:integration
+- npm run test:e2e
+- npm run build
+- npm start
+- npm run verify
+
+npm run verify must run formatting checks, strict type checking, lint, unit tests, integration tests, and the production build.
+
+Configure .replit:
+
+- Run command: npm run dev
+- Local port: 5000
+- External port: 80
+- Deployment build: npm run build
+- Deployment run: npm start
+- Autoscale-compatible single exposed port
+
+APPLICATION MODES
+
+Support four user-visible modes:
+
+DEMO
+- No optional keys required.
+- Full isolated sample workspace.
+- Deterministic provider simulations.
+- Every receipt prominently says Simulated.
+
+CONNECTED TEST
+- One or more real provider test credentials configured.
+- Real test writes allowed after preflight.
+- Provider mode shown on every action.
+
+PARTIAL
+- Some providers configured and others simulated or degraded.
+- Each provider operates independently.
+- Never obscure mixed modes.
+
+LIVE
+- Live credentials configured.
+- Live writes remain locked unless SCOPEFOLD_LIVE_WRITES=true.
+- Explicit confirmation required before every live launch.
+
+AUTHENTICATION AND DEMO ACCESS
+
+Use Replit Auth for persistent owner and team accounts. Agent should provision Replit Auth using the supported Replit mechanism.
+
+However, authentication must not block the first-run demo.
+
+Anonymous demo behavior:
+
+- On first visit, create an opaque random demo-session token.
+- Store it in an HttpOnly, Secure, SameSite=Lax cookie.
+- Store only its SHA-256 hash in PostgreSQL.
+- Lazily clone the immutable seed template into an isolated demo workspace.
+- Do not let anonymous visitors mutate one globally shared demo.
+- Expire demo workspaces after 24 hours.
+- Perform bounded opportunistic cleanup.
+- A signed-in user may claim their current demo into a persistent workspace.
+
+Workspace roles:
+
+- owner
+- admin
+- operator
+- viewer
+
+Every repository operation must receive an authorization context. Never trust workspace IDs supplied by the browser.
+
+CLIENT PORTAL AUTHORIZATION
+
+Client portals use separate access, not owner authentication.
+
+- Generate 256-bit random invitation tokens.
+- Store only token hashes.
+- Tokens are expiring, revocable, and scoped to one project.
+- Redeeming a token creates a scoped portal session.
+- Portal users can view their project, upload requested files, comment, and approve or reject assigned approvals.
+- Portal users cannot access internal notes, connectors, team settings, unrelated projects, private receipt metadata, or owner APIs.
+- The seeded demo may use a stable public demo portal slug, but production invitations must remain cryptographically random.
+
+DATABASE MODEL
+
+Use UUID primary keys unless a platform-owned identifier requires otherwise.
+
+Every tenant-owned row must carry workspace_id. Use composite constraints or equivalent repository safeguards to prevent cross-workspace relationships.
+
+Create at least:
+
+IDENTITY
+- profiles
+- workspaces
+- workspace_members
+- demo_sessions
+
+CLIENTS
+- clients
+- client_contacts
+- projects
+
+DOCUMENTS
+- documents
+- document_pages
+- evidence_spans
+- clauses
+
+INTERPRETATION
+- obligations
+- obligation_evidence
+- ambiguities
+- ambiguity_options
+- ambiguity_impacts
+
+FOLD
+- fold_runs
+- operational_items
+- item_obligations
+
+OPERATIONS
+- milestones
+- tasks
+- task_dependencies
+- approvals
+- approval_decisions
+- payment_requests
+- file_requests
+
+PORTAL
+- portal_invites
+- portal_sessions
+
+EXECUTION
+- connectors
+- launches
+- execution_actions
+- outbox_jobs
+
+VERIFICATION
+- receipts
+- receipt_events
+- webhook_events
+- audit_events
+
+BOOTSTRAP
+- seed_versions
+- workspace_brand_settings
+
+DATA RULES
+
+- Money is stored as integer cents plus ISO currency.
+- Use timestamptz for events.
+- Use date for contractual due dates.
+- Add created_at and updated_at consistently.
+- Add optimistic version columns to editable aggregates.
+- Add unique constraints for provider event IDs.
+- Add unique action idempotency keys.
+- Add a unique seed-version key.
+- Index workspace, project, status, due date, connector, and outbox scheduling columns.
+- Soft-delete clients, projects, and documents.
+- Never soft-delete or rewrite receipts, receipt events, execution history, or audit events.
+- JSONB is allowed only for immutable snapshots, provider summaries, and PDF geometry.
+- Do not store the whole application as one mutable JSON project blob.
+
+PROVENANCE MODEL
+
+A document contains pages.
+
+Evidence spans contain:
+
+- document ID
+- page number
+- exact quoted text
+- normalized start and end offsets
+- optional geometry
+- SHA-256 source hash
+
+A clause can contain one or more evidence spans.
+
+An obligation links to one or more evidence spans.
+
+Every operational item links to at least one reviewed obligation.
+
+Every receipt snapshots:
+
+- Operational item
+- Obligation
+- Exact source quotation
+- Page number
+- Interpretation used
+- Actor
+- Provider mode
+- External destination
+- Timestamp
+
+Later contract edits must never rewrite the historical evidence snapshot inside an existing receipt.
+
+SEED DATA
+
+Create one immutable seed template named:
+
+scopefold-demo-v1
+
+Primary demo:
+
+Agency:
+Northstar Studio
+
+Client:
+Harbor & Pine Coffee
+
+Engagement:
+Brand Identity and Commerce Website
+
+Contract value:
+USD 24,000
+
+State on first visit:
+Ready for review, before The Fold
+
+Five milestones:
+
+1. Discovery
+2. Brand Strategy
+3. Visual Identity
+4. Commerce Website
+5. Launch and Handoff
+
+Fourteen tasks:
+
+Discovery:
+1. Kickoff workshop
+2. Stakeholder interviews
+3. Existing-brand audit
+
+Brand Strategy:
+4. Positioning framework
+5. Customer journey and sitemap
+6. Strategy presentation
+
+Visual Identity:
+7. Concept directions
+8. Identity refinement
+9. Production asset package
+
+Commerce Website:
+10. Wireframes
+11. Responsive interface design
+12. Commerce implementation
+13. Browser and accessibility QA
+
+Launch and Handoff:
+14. Training and handoff
+
+Payments:
+
+1. USD 8,000 deposit
+2. USD 8,000 midpoint payment after identity approval
+3. USD 8,000 final payment before launch
+
+Approvals:
+
+1. Brand strategy approval
+2. Visual identity approval
+
+Dependency:
+
+- Commerce implementation is blocked until the client delivers final product photography and approved product copy.
+
+Ambiguity:
+
+Contract language:
+“The Client is entitled to two rounds of revisions during the engagement.”
+
+Present two interpretations:
+
+A. Two revision rounds total across the entire engagement.
+B. Two revision rounds for every milestone.
+
+Selecting A should allocate:
+- One identity revision round
+- One website revision round
+
+Selecting B should allocate:
+- Two rounds to every reviewable milestone
+- More estimated effort
+- A visible schedule-risk warning
+
+The ambiguity choice must visibly alter downstream operation metadata before folding.
+
+Add two secondary projects so the ledger feels like a real operating environment:
+
+1. Alder Row Interiors
+   - USD 12,500
+   - In delivery
+   - 62% complete
+   - Next event: Homepage approval
+
+2. Meridian Dental
+   - USD 18,000
+   - Awaiting client approval
+   - 41% complete
+   - Next event: Strategy decision
+
+Secondary projects must still contain valid provenance for their visible operations. The primary 90-second demo remains Harbor & Pine.
+
+SAMPLE CONTRACT
+
+Create a real text-based sample PDF and a matching plain-text fixture from this contract. The PDF must be inspectable in the app and accessible through an equivalent text view.
+
+Use this source content:
+
+NORTHSTAR STUDIO
+SERVICES AGREEMENT
+Agreement NS-HPC-2026-04
+
+This Services Agreement is entered into by Northstar Studio (“Studio”) and Harbor & Pine Coffee (“Client”).
+
+1. ENGAGEMENT
+
+The Studio will develop a brand strategy, visual identity, and responsive commerce website for the Client. Work begins after receipt of the initial payment and completion of the kickoff workshop.
+
+2. DISCOVERY
+
+The Studio will conduct one kickoff workshop, interview up to four stakeholders, and audit the Client’s existing identity, website, product catalog, and available customer research. Discovery findings will be delivered as a written summary.
+
+3. BRAND STRATEGY
+
+The Studio will prepare a positioning framework, audience definition, customer journey, initial website sitemap, and strategy presentation. The Client must approve the brand strategy before visual identity refinement begins.
+
+4. VISUAL IDENTITY
+
+The Studio will present two visual identity concept directions. Following selection of one direction, the Studio will refine the selected identity and prepare the approved logo suite, typography system, color system, and production asset package.
+
+5. COMMERCE WEBSITE
+
+The Studio will produce responsive wireframes, responsive interface designs, and a commerce implementation for desktop and mobile. The website will include the approved product catalog, product-detail pages, cart, checkout handoff, editorial content modules, and basic analytics instrumentation.
+
+6. CLIENT MATERIALS AND DEPENDENCIES
+
+The Client will provide final product photography, approved product copy, pricing, shipping information, and legal policies by October 16, 2026. Commerce implementation cannot begin until final product photography and approved product copy are received.
+
+7. REVIEW AND APPROVAL
+
+The Client will provide consolidated feedback within three business days of each review. Brand strategy and visual identity require explicit written approval. Silence does not constitute approval.
+
+8. REVISIONS
+
+The Client is entitled to two rounds of revisions during the engagement. Additional revisions or changes outside the approved scope require a written change request and may affect fees and schedule.
+
+9. SCHEDULE
+
+The anticipated schedule is:
+
+Discovery complete: September 4, 2026
+Brand strategy approval: September 18, 2026
+Visual identity approval: October 9, 2026
+Commerce website review: November 13, 2026
+Launch and handoff: November 20, 2026
+
+Dates depend on timely Client materials, feedback, and approvals.
+
+10. FEES AND PAYMENT
+
+The total fee is USD 24,000.
+
+USD 8,000 is due upon signing.
+USD 8,000 is due after visual identity approval.
+USD 8,000 is due before website launch.
+
+The Studio is not required to begin a phase whose preceding payment is overdue.
+
+11. LAUNCH AND HANDOFF
+
+After final payment and Client approval, the Studio will coordinate launch, provide one recorded training session, and deliver the final brand and website handoff package.
+
+12. ACCEPTANCE
+
+A deliverable is accepted only when the Client provides written approval. Approved deliverables may be used as dependencies for subsequent work.
+
+SEED REQUIREMENTS
+
+The seed must be idempotent.
+
+Running it repeatedly must:
+
+- Never duplicate workspaces
+- Never duplicate projects
+- Never duplicate operations
+- Never duplicate receipts
+- Preserve user-created data
+- Restore only when the explicit Reset Demo action is used
+
+Create an explicit, confirmed “Reset demo” action in Remix Studio.
+
+DOCUMENT INGESTION
+
+The /new route must support:
+
+1. Upload a PDF
+2. Paste contract text
+3. Use sample contract
+
+PDF rules:
+
+- Maximum 12 MB
+- Maximum 100 pages
+- Verify actual MIME type
+- Sanitize displayed filenames
+- Compute SHA-256
+- Reject encrypted or unsupported files with a recoverable message
+- Extract text page by page
+- Never execute embedded scripts or active content
+- Store originals in App Storage using opaque workspace-scoped object keys
+- Store extracted text and evidence coordinates in PostgreSQL
+- If App Storage is temporarily unavailable, preserve paste-text and sample-contract paths
+- If the PDF appears scanned, show:
+  “Text could not be extracted from this PDF.”
+- Offer paste-text fallback
+- Do not pretend OCR occurred
+
+CANDIDATE OBLIGATION DETECTION
+
+The zero-key implementation must find candidate clauses deterministically.
+
+Use signals including:
+
+- Numbered headings
+- Currency
+- Dates
+- “shall”
+- “must”
+- “will”
+- “due”
+- “approve”
+- “approval”
+- “deliver”
+- “provide”
+- “invoice”
+- “payment”
+- “before”
+- “after”
+- “depends”
+- “cannot begin”
+- “revision”
+
+Candidates are suggestions only.
+
+The user must be able to:
+
+- Select exact contract text
+- Mark it as milestone, task, payment, approval, dependency, constraint, or ambiguity
+- Edit the normalized title
+- Add a due date
+- Add an amount where relevant
+- Link multiple source spans
+- Confirm or reject suggestions
+
+No AI is required.
+
+OPTIONAL AI
+
+AI may be added only as an optional provider adapter.
+
+If OPENAI_API_KEY is present:
+
+- Offer “Draft obligations with AI”
+- Send extracted text, not raw binary
+- Require structured schema output
+- Validate with Zod
+- Mark every result Unreviewed
+- Never automatically Fold AI output
+- Never claim legal interpretation
+- Never block the manual path
+
+Do not send documents to AI without explicit user action.
+
+CORE ROUTES
+
+Implement:
+
+/
+- Redirect to /projects
+
+/projects
+- Operational project ledger
+- Search
+- Lifecycle filter
+- Client filter
+- Sort by next contractual event
+- Columns:
+  Client
+  Engagement
+  Contract value
+  Lifecycle
+  Evidence completeness
+  Progress
+  Next event
+  Risk
+- Use table/list composition, not card soup
+- Include a dismissible zero-key demo notice
+- Primary Harbor & Pine row should be immediately obvious
+
+/new
+- Three-path contract ingestion
+- Upload, paste, or sample
+- Clear validation
+- Useful progress states
+- Recoverable extraction errors
+
+/p/:id/review
+- Split workspace
+- Document on the left
+- Obligation ledger on the right
+- Exact evidence highlighting
+- Source-to-obligation linking
+- Ambiguity resolution
+- Downstream impact preview
+- Keyboard-accessible evidence navigation
+- Mobile version switches between Document and Obligations tabs
+
+/p/:id/fold
+- Dedicated signature-moment stage
+- Reviewed clauses before transformation
+- Fold preview
+- “Fold into operations” command
+- Source-linked transformation
+- Proof-chain access
+- Reduced-motion equivalent
+
+/p/:id/operations
+- Milestones
+- Nested tasks
+- Dependencies
+- Payments
+- Approvals
+- File requests
+- Progress
+- Contractual risk
+- Evidence drawer on every item
+- Internal desktop layout may use lanes
+- Mobile must become a structured vertical list
+- No page-level horizontal overflow
+
+/p/:id/launch
+- Provider capability summary
+- Explicit preflight
+- Independent actions
+- Durable progress
+- Partial success
+- Retry controls
+- Immutable receipts
+- Receipt JSON export
+- Proof-chain view
+
+/portal/:token
+- Client project summary
+- Milestones
+- Payment requests
+- Approval requests
+- Requested files
+- Approve and reject actions
+- Clean client-facing design
+- No internal navigation rail
+- Approval round-trip to owner operations
+
+/remix-studio
+- Workspace name
+- Brand name
+- Primary color
+- Evidence color
+- Currency
+- Service type
+- Workflow terminology
+- Provider readiness
+- Seed reset
+- Live preview
+- Token export
+- Settings persist in PostgreSQL
+- Changes apply immediately throughout the app
+
+/design-system
+- Live tokens
+- Both themes
+- Typography
+- Buttons
+- Inputs
+- Selects
+- Checkboxes
+- Radio groups
+- Segmented controls
+- Status badges
+- Tables
+- Evidence highlights
+- Drawers
+- Dialogs
+- Toasts
+- Skeletons
+- Empty states
+- Error states
+- Receipts
+- Contrast ratios
+- Responsive previews
+- Accessibility notes
+- Exportable token JSON
+- Generated DESIGN.md content preview
+
+Unmatched routes:
+- Compact not-found state
+- Link to Projects
+
+PROJECT LIFECYCLE
+
+Use:
+
+- Draft
+- Extracted
+- In review
+- Ready to fold
+- Operating
+- Launching
+- Active
+- Complete
+
+Display a compact lifecycle indicator:
+
+Review → Fold → Operate → Launch
+
+This represents real project state. It must not become a tutorial overlay.
+
+THE FOLD
+
+The Fold is the signature moment and must feel unlike an ordinary CRUD transition.
+
+BEFORE
+
+Display reviewed evidence excerpts in document order. Each excerpt includes:
+
+- Clause number
+- Exact quote
+- Obligation type
+- Confidence source: Manual, Deterministic, or AI draft
+- Review state
+
+Show unresolved blocking ambiguities.
+
+Disable Fold only while a blocking ambiguity remains unresolved.
+
+PREVIEW
+
+The preview must deterministically calculate:
+
+- Milestones
+- Tasks
+- Payments
+- Approvals
+- Dependencies
+- Schedule risks
+- Revision allocation
+- Evidence completeness
+
+Display differences caused by ambiguity resolution before committing.
+
+TRANSFORMATION
+
+When activated:
+
+- Complete in no more than 560 milliseconds
+- Use shared layout IDs where appropriate
+- Use opacity and transform only
+- Compress reviewed evidence into a persistent source rail
+- Reveal operational objects in temporal order
+- Draw restrained SVG evidence threads between source and destination
+- Keep dimensions stable
+- Do not use confetti
+- Do not use particles
+- Do not use gradients
+- Do not use celebratory copy
+- Do not introduce fake waiting
+- Announce completion through an aria-live region
+
+Under prefers-reduced-motion:
+
+- Transform immediately
+- Preserve focus
+- Announce completion
+- Retain all information
+
+AFTER
+
+Each operation exposes a source button.
+
+The source button opens a shared evidence drawer containing:
+
+- Exact clause quotation
+- Document name
+- Page number
+- Obligation classification
+- Interpretation
+- Review actor
+- Downstream effects
+- Related receipt count
+
+Add a Proof Chain view:
+
+Receipt
+→ Provider action
+→ Operational item
+→ Reviewed obligation
+→ Source evidence
+
+The Proof Chain should be visually compelling, keyboard accessible, and printable.
+
+FOLD ALGORITHM
+
+The Fold must be deterministic after review.
+
+Rules:
+
+- Milestone obligations create milestones.
+- Task obligations attach to the nearest relevant milestone.
+- Payment obligations create payment requests.
+- Approval obligations create approval requests.
+- Dependency obligations create dependency edges.
+- Constraints add risk and blocking metadata.
+- Dates become due dates.
+- Currency values become integer-cent amounts.
+- Evidence links propagate to every resulting object.
+- A resulting object without evidence is a validation failure.
+- Repeated Fold requests with the same reviewed-input hash and policy version return the same result.
+- Committing a Fold creates a versioned fold_run.
+- A later Fold supersedes an earlier version but never deletes historical receipts.
+
+PROVIDER ARCHITECTURE
+
+Create typed provider contracts:
+
+- ArtifactExtractor
+- PaymentProvider
+- EmailProvider
+- WorkProvider
+- StorageProvider
+- OptionalInterpretationProvider
+
+Each external provider implements:
+
+- detectCapability()
+- preflight()
+- execute()
+- reconcile()
+- redactReceipt()
+
+Provider states:
+
+- simulated
+- connected-test
+- connected-live-locked
+- connected-live
+- unconfigured
+- degraded
+
+Rules:
+
+- Missing key selects simulated.
+- Configured test key selects connected-test.
+- Live key without live-write flag selects connected-live-locked.
+- Provider health failure selects degraded.
+- Never silently convert a failed real call into simulated success.
+- Never send secrets to the browser.
+- Never store full provider responses.
+- Persist redacted summaries and provider identifiers only.
+
+STRIPE
+
+Use the official Stripe server SDK.
+
+SIMULATED MODE
+
+Without STRIPE_SECRET_KEY:
+
+- Generate a deterministic local simulated payment URL
+- Receipt mode must say Simulated
+- No external request occurs
+
+TEST MODE
+
+With a key beginning sk_test_:
+
+- Verify account access
+- Create a genuine Stripe test Product
+- Create a genuine one-time Price
+- Create a genuine Payment Link
+- Use project and payment names
+- Include metadata:
+  projectId
+  launchId
+  actionId
+  paymentRequestId
+  obligationIds
+- Use stable idempotency keys
+- Store returned Product, Price, and Payment Link IDs
+- Store the real Stripe test URL
+- Show “Stripe test”
+- Never call live mode
+
+LIVE MODE
+
+With a key beginning sk_live_:
+
+- Default to connected-live-locked
+- Require SCOPEFOLD_LIVE_WRITES=true
+- Require the operator to type the project name
+- Show amount, currency, customer, and destination before confirmation
+- Never run live writes during automated tests
+
+STRIPE WEBHOOK
+
+Implement:
+
+POST /api/webhooks/stripe
+
+Requirements:
+
+- Raw body before JSON middleware
+- Verify Stripe signature with STRIPE_WEBHOOK_SECRET
+- Deduplicate provider event ID
+- Return 2xx quickly
+- Queue processing
+- Do not assume ordering
+- Reconcile payment status
+- Append receipt events
+- Never rewrite the original receipt
+
+RESEND
+
+Use the official Resend server SDK.
+
+SIMULATED MODE
+
+Without RESEND_API_KEY:
+
+- Generate a deterministic simulated delivery receipt
+- Do not send an email
+- Clearly label Simulated
+
+CONNECTED TEST MODE
+
+With RESEND_API_KEY:
+
+- Force recipients to INTEGRATION_TEST_EMAIL unless live writes are enabled
+- Use RESEND_FROM_EMAIL when supplied
+- Otherwise use Scopefold <onboarding@resend.dev>
+- Send HTML and plain-text versions
+- Include:
+  Client greeting
+  Engagement name
+  Milestone summary
+  First payment link when available
+  Portal URL
+  Agency contact
+- Use a stable Resend idempotency key
+- Store returned email ID
+- Record actual destination after redaction
+- Show honest configuration failures
+
+CONNECTED LIVE MODE
+
+- Require SCOPEFOLD_LIVE_WRITES=true
+- Show exact sender, recipient, subject, and portal URL
+- Require confirmation
+
+RESEND WEBHOOK
+
+When RESEND_WEBHOOK_SECRET exists:
+
+- Verify signatures
+- Deduplicate svix-id
+- Accept at-least-once delivery
+- Do not assume ordering
+- Append delivered, bounced, complained, or failed events
+- Preserve original receipt
+
+LINEAR
+
+Use the official Linear TypeScript SDK.
+
+SIMULATED MODE
+
+Without LINEAR_API_KEY:
+
+- Generate deterministic simulated project and issue IDs
+- Clearly label Simulated
+
+CONNECTED TEST MODE
+
+With LINEAR_API_KEY:
+
+- Verify the key by loading the viewer
+- Discover available teams
+- Let the owner select a team
+- Persist the selected LINEAR_TEAM_ID
+- Create a real Linear project for the engagement
+- Create one issue for every launchable task
+- Prefix test objects with [SCOPEFOLD TEST]
+- Include in issue descriptions:
+  Scopefold project URL
+  Scopefold action marker
+  Contract source quotation
+  Obligation ID
+  Due date
+  Dependency information
+- Marker format:
+  [scopefold-action:<actionId>]
+- Store returned project and issue IDs and URLs
+- Use local action idempotency to prevent duplicates
+- On uncertain timeout, set status Unknown and reconcile before retrying
+
+LIVE LINEAR MODE
+
+- Require SCOPEFOLD_LIVE_WRITES=true
+- Remove the test prefix only in confirmed live mode
+
+LAUNCH SYSTEM
+
+A launch contains independent execution actions.
+
+Preflight must display:
+
+- Provider
+- Capability state
+- Exact action
+- Destination
+- Amount where relevant
+- Object count
+- Source clauses
+- Idempotency key summary
+- Safety mode
+
+Creating a launch must atomically write:
+
+- Launch
+- Execution actions
+- Outbox jobs
+
+Return HTTP 202 quickly.
+
+OUTBOX
+
+Use PostgreSQL as the durable job queue.
+
+- Claim jobs with FOR UPDATE SKIP LOCKED
+- Use leases
+- Store attempt count
+- Use bounded exponential backoff
+- Process each provider independently
+- Keep successful results when another action fails
+- Do not auto-retry Unknown actions
+- Never retry Succeeded actions
+- Allow explicit retry for retryable Failed actions
+- Wake the job drain when the launch page polls
+- Resume pending jobs after restart
+- Do not require Redis or an always-on worker
+
+Launch status:
+
+- pending
+- running
+- succeeded
+- partial
+- failed
+- unknown
+
+RECEIPTS
+
+Receipts are immutable.
+
+Every receipt contains:
+
+- Scopefold receipt ID
+- Launch ID
+- Action ID
+- Provider
+- Provider mode
+- Provider object ID
+- External URL when applicable
+- Destination summary
+- Timestamp
+- Actor
+- Idempotency key
+- Redacted request summary
+- Redacted response summary
+- Source-evidence snapshot
+- Receipt status
+
+Provide:
+
+- Receipt drawer
+- Proof Chain
+- Copy receipt link
+- Export receipt JSON
+- Print-friendly receipt
+- Event timeline
+
+Simulated receipts must use a visually unmistakable Simulated label.
+
+Do not visually imply simulated, test, and live receipts are equivalent.
+
+API
+
+Use versioned JSON endpoints under /api/v1.
+
+At minimum support:
+
+- Bootstrap/session
+- Projects
+- Documents
+- Document upload
+- Extraction status
+- Evidence spans
+- Obligations
+- Ambiguities
+- Fold preview
+- Fold commit
+- Operations
+- Approvals
+- Payments
+- Connector capabilities
+- Launch preflight
+- Launch execution
+- Launch status
+- Receipts
+- Portal redemption
+- Portal approval
+- Brand settings
+- Demo reset
+
+Use shared Zod contracts for requests and responses.
+
+Error responses use application/problem+json and include:
+
+- Stable error code
+- Human-readable title
+- Request ID
+- Field errors where relevant
+- No stack trace in production
+
+External-write endpoints require an idempotency key.
+
+Editable aggregate requests require the expected version.
+
+USER INTERFACE DIRECTION
+
+The interface must feel:
+
+- Evidentiary
+- Composed
+- Tactile
+- Editorial
+- Precise
+- Operational
+
+The visual metaphor is:
+
+An editorial contract document joined to a precision operations console.
+
+Do not create:
+
+- A marketing homepage
+- An oversized hero
+- Generic SaaS cards
+- Dashboard card soup
+- Cards inside cards
+- Purple-dominated styling
+- Glassmorphism
+- Decorative blobs
+- Decorative orbs
+- Gradients
+- Negative letter spacing
+- Excessive pills
+- Huge empty areas
+- Fake charts
+- Cartoon illustrations
+- Decorative AI sparkles
+- Visible instructional paragraphs explaining obvious controls
+
+TYPOGRAPHY
+
+Self-host:
+
+- Manrope Variable for display and headings
+- IBM Plex Sans Variable for body and interface text
+
+Use:
+
+- H1: 32px / 38px / weight 650
+- H2: 24px / 30px / weight 650
+- H3: 18px / 24px / weight 600
+- Body: 15px / 22px / weight 400
+- Small: 13px / 18px
+- Micro: 11px / 16px
+
+Letter spacing must be 0.
+
+Do not scale font size with viewport width.
+
+LIGHT THEME
+
+--canvas: #F5F7F4
+--surface: #FFFFFF
+--surface-muted: #EBEFEB
+--ink: #17201B
+--ink-muted: #59665E
+--border: #CFD7D1
+--primary: #1746D1
+--primary-hover: #1037AA
+--primary-contrast: #FFFFFF
+--evidence: #D7F53F
+--evidence-ink: #17201B
+--success: #157A55
+--warning: #8A5A00
+--danger: #B42318
+--focus: #1746D1
+
+DARK THEME
+
+--canvas: #0E1210
+--surface: #151A17
+--surface-muted: #1D241F
+--ink: #F3F7F4
+--ink-muted: #A9B4AC
+--border: #354038
+--primary: #8CA5FF
+--primary-hover: #A9B9FF
+--primary-contrast: #0E1210
+--evidence: #D7F53F
+--evidence-ink: #17201B
+--success: #5DD39E
+--warning: #F2C14E
+--danger: #FF8A80
+--focus: #8CA5FF
+
+THEMING
+
+- Respect system theme initially
+- Persist user choice
+- Set data-theme on the root document
+- Set color-scheme correctly
+- Prevent incorrect-theme flash
+- Update theme-color metadata
+- Use a Lucide Sun/Moon icon control
+- Provide an accurate aria-label
+- Ensure visible keyboard focus
+
+SPACING
+
+Use a restrained scale:
+
+- 4
+- 8
+- 12
+- 16
+- 24
+- 32
+- 48
+
+RADII
+
+- 4px compact
+- 6px default
+- 8px maximum for panels
+- Circular only for icon-only circular controls
+
+BORDERS AND ELEVATION
+
+- Use 1px semantic borders
+- Use one restrained shadow level only where elevation communicates behavior
+- Keep page sections unframed
+- Do not float every section in a card
+
+APP SHELL
+
+Desktop at 960px and wider:
+
+- 232px fixed navigation rail
+- Scopefold wordmark as a strong first-viewport signal
+- Projects
+- New Scope
+- Current project lifecycle routes when inside a project
+- Remix Studio
+- Design System
+- Theme control and provider-state indicator at the rail bottom
+- Stable main-content gutters
+
+Below 960px:
+
+- 56px top bar
+- Stable bottom navigation
+- Safe-area support
+- Minimum 44px touch targets
+- No page-level horizontal overflow
+- No overlapping text at 320px
+
+COMPONENTS
+
+Build production-ready:
+
+- Buttons
+- Icon buttons with tooltips
+- Inputs
+- Textareas
+- Selects
+- Segmented controls
+- Checkboxes
+- Radio groups
+- Date inputs
+- Currency inputs
+- Search
+- Tables
+- Status badges
+- Evidence chips
+- Evidence drawer
+- Proof-chain view
+- Dialogs
+- Confirmation dialogs
+- Toasts
+- Skeletons
+- Empty states
+- Error states
+- File dropzone
+- Progress indicators
+- Receipt views
+- Provider capability rows
+- Command palette
+
+Use familiar Lucide icons. Do not manually draw common interface icons.
+
+MOTION
+
+Standard feedback:
+
+- 140ms
+- Opacity and transform
+- Restrained hover
+- Restrained press
+
+The Fold:
+
+- Maximum 560ms
+- Purposeful shared-layout transformation
+- Evidence threads
+- No waiting theater
+
+Page changes:
+
+- No large page transitions
+- Small content fade only when it improves continuity
+
+Respect prefers-reduced-motion globally.
+
+LOADING STATES
+
+Every route must have:
+
+- Loading skeleton
+- Meaningful empty state
+- Populated state
+- Recoverable error state
+
+Never use a blank spinner in the middle of an otherwise empty page.
+
+ACCESSIBILITY
+
+- Semantic header, nav, main, section, table, form, and dialog elements
+- Skip link
+- Full keyboard operation
+- Logical focus order
+- Focus trap in dialogs and drawers
+- Focus restoration after closing overlays
+- 2px visible focus treatment
+- aria-current on navigation
+- Accurate labels
+- Polite live regions for extraction, Fold, launch, and approval results
+- 44px touch targets
+- WCAG AA text contrast
+- PDF text alternative
+- 200% zoom support
+- No serious axe violations
+- Keyboard-only Fold
+- Keyboard-only evidence drawer
+- Keyboard-only launch
+- Keyboard-only portal approval
+- Reduced-motion verification
+
+RESPONSIVE REQUIREMENTS
+
+Verify at:
+
+- 320×568
+- 390×844
+- 768×1024
+- 1440×900
+- 1920×1080
+- 2560×1440
+
+Requirements:
+
+- No text overlap
+- No clipped controls
+- No page-level horizontal scrollbar
+- Long client names wrap safely
+- Currency and dates remain legible
+- Fixed controls do not cover content
+- Mobile operations become a vertical structure
+- Review becomes accessible tabs
+- The Fold remains understandable on mobile
+- Evidence drawer uses full-screen mobile presentation
+
+SECURITY
+
+Implement:
+
+- Server-side authentication verification
+- Tenant-scoped authorization
+- Origin validation
+- CSRF protection for browser mutations
+- Secure cookies
+- Strict content-type handling
+- Request-size limits
+- Upload-size limits
+- MIME sniffing
+- Filename sanitization
+- Parameterized database access
+- Restrictive CORS or same-origin only
+- Helmet security headers
+- Restrictive CSP
+- Frame denial
+- Referrer policy
+- Provider webhook verification
+- Rate limits for uploads, launch actions, portal redemption, and approvals
+- Secret redaction
+- No provider tokens in browser bundles
+- No document contents in logs
+- No webhook bodies in logs
+- No untrusted HTML rendering
+- No production stack traces
+
+OBSERVABILITY
+
+Use structured logs with:
+
+- Request ID
+- Route
+- Status
+- Duration
+- Workspace ID when safe
+- Action ID when safe
+
+Redact:
+
+- Authorization headers
+- Cookies
+- Tokens
+- Secrets
+- Emails
+- Document text
+- Provider bodies
+- Webhook bodies
+
+Expose no private operational endpoint publicly.
+
+PERFORMANCE
+
+Targets:
+
+- Warm internal API reads p95 below 100ms
+- Launch acceptance below 100ms before provider work
+- Interaction to Next Paint below 200ms
+- No unbounded project graph response
+- Route-level code splitting
+- Lazy-load PDF tooling
+- Virtualize long document pages
+- Bound database queries
+- Add required indexes
+- Cache immutable seed assets
+- Self-host fonts
+- Avoid unnecessary re-renders
+- Avoid large provider SDKs in the browser
+- Lighthouse at least 95 for Performance, Accessibility, Best Practices, and SEO on the public entry route
+
+REMIX STUDIO
+
+Remix Studio is part of the product, not documentation decoration.
+
+Provide live controls for:
+
+- Brand name
+- Agency name
+- Primary color
+- Evidence color
+- Currency
+- Client terminology
+- Project terminology
+- Milestone terminology
+- Service type
+- Default payment schedule
+- Provider readiness
+
+Provide:
+
+- Desktop preview
+- Mobile preview
+- Contrast validation
+- Token JSON export
+- Generated DESIGN.md preview
+- Reset demo
+- Copy customization summary
+
+Do not expose secret values. Show only:
+
+- Configured
+- Missing
+- Test
+- Live locked
+- Live
+- Degraded
+
+DESIGN SYSTEM PAGE
+
+The /design-system route must render the actual production components and tokens.
+
+Include:
+
+- Light and dark previews
+- Text-bearing contrast ratios
+- Type scale
+- Spacing scale
+- Radius scale
+- Buttons and states
+- Inputs and validation
+- Tables
+- Evidence treatment
+- Receipts
+- Provider states
+- Loading states
+- Empty states
+- Error states
+- Responsive component previews
+- Accessibility status
+
+Do not create a static style-guide screenshot.
+
+README AND REMIX PACKAGE
+
+Create a polished README containing:
+
+1. Scopefold overview
+2. Product screenshot
+3. The 60-second Remix → Run path
+4. Zero-key demo explanation
+5. Exact optional environment table
+6. Architecture diagram
+7. Proof-chain diagram
+8. Provider mode explanation
+9. Test versus live safety
+10. Database migration commands
+11. Seed and reset commands
+12. Customization recipes
+13. Publish instructions
+14. Verification commands
+15. Known limitations
+
+Create:
+
+- .env.example
+- ARCHITECTURE.md
+- DESIGN.md
+- CUSTOMIZE.md
+
+Use empty values only.
+
+Environment variables:
+
+DATABASE_URL
+APP_BASE_URL
+LOG_LEVEL
+SCOPEFOLD_LIVE_WRITES
+
+STRIPE_SECRET_KEY
+STRIPE_WEBHOOK_SECRET
+
+RESEND_API_KEY
+RESEND_FROM_EMAIL
+RESEND_WEBHOOK_SECRET
+INTEGRATION_TEST_EMAIL
+
+LINEAR_API_KEY
+LINEAR_TEAM_ID
+
+OPENAI_API_KEY
+OPENAI_MODEL
+OPENAI_BASE_URL
+
+Never place actual credentials in files.
+
+VISUAL ASSETS
+
+Create:
+
+- Professional favicon
+- App icon
+- 1200×630 OG image
+- Real screenshots after implementation
+- Light desktop ledger screenshot
+- Fold/operations screenshot
+- Mobile portal screenshot
+
+Use bitmap assets for final social images. Do not create a generic gradient social card.
+
+TESTING
+
+UNIT TESTS
+
+Cover:
+
+- Money normalization
+- Date normalization
+- Evidence-span validation
+- Obligation classification
+- Ambiguity effects
+- Fold determinism
+- Fold idempotency
+- Provenance propagation
+- Provider capability detection
+- Receipt redaction
+- Idempotency key generation
+
+INTEGRATION TESTS
+
+Cover:
+
+- Fresh migration
+- Idempotent seed
+- Anonymous demo isolation
+- Workspace isolation
+- Sample contract extraction
+- Pasted-text ingestion
+- Arbitrary text ingestion
+- Fold preview and commit
+- Every operation containing evidence
+- Portal token redemption
+- Portal authorization
+- Approval round-trip
+- Simulated Stripe
+- Simulated Resend
+- Simulated Linear
+- Mocked real-provider success
+- Mocked provider validation failure
+- Mocked timeout
+- Partial launch success
+- Duplicate launch prevention
+- Duplicate webhook prevention
+- Unknown-state reconciliation
+- Secret redaction
+- SPA route fallback
+- Health endpoint
+
+BROWSER TESTS
+
+Verify the entire judge path:
+
+1. Open /projects
+2. Open Harbor & Pine
+3. Inspect evidence
+4. Resolve ambiguity
+5. Preview downstream change
+6. Run The Fold
+7. Open an evidence drawer
+8. Open Proof Chain
+9. Inspect operations
+10. Launch all providers
+11. Inspect receipts
+12. Open portal
+13. Approve identity
+14. Confirm owner operations updated
+15. Change brand color and currency in Remix Studio
+16. Confirm global application update
+
+Run at desktop and mobile widths.
+
+Add:
+
+- Keyboard-only test
+- Reduced-motion test
+- axe test
+- Console-error assertion
+- Horizontal-overflow assertion
+- Screenshot assertions
+- Nonblank PDF-viewer assertion
+
+DEMO NARRATIVE
+
+Optimize this

@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Scopefold"
+description = "A provenance-first operations workspace for agencies and professional service teams. Scopefold turns signed scopes into reviewed obligations, milestones, tasks, approvals, payments, client portal actions, and immutable proof-chain receipts with a complete zero-key demo."
+version = "1.0.0"
+id = "artifacts/scopefold"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 21661
+
+[services.development]
+run = "pnpm --filter @workspace/scopefold run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/scopefold", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/scopefold/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21661"
+BASE_PATH = "/"

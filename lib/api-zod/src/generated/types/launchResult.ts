@@ -5,7 +5,9 @@
  * Scopefold provenance-first operations API
  * OpenAPI spec version: 0.1.0
  */
+import type { Receipt } from './receipt';
 
-export interface HealthStatus {
+export interface LaunchResult {
   status: string;
+  receipts: Receipt[];
 }

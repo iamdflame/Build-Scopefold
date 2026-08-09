@@ -1,0 +1,1 @@
+- [Simulated provider actions](simulated-provider-actions.md) — provider UIs must treat simulated mode as runnable while preserving its explicit simulated label.
