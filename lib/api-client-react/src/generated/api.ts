@@ -32,6 +32,8 @@ import type {
   LaunchResult,
   ListProjectsParams,
   OperationsWorkspace,
+  PortalApprovalInput,
+  PortalApprovalResult,
   PortalView,
   Project,
   ProjectDetail,
@@ -980,6 +982,78 @@ export function useGetPortal<TData = Awaited<ReturnType<typeof getPortal>>, TErr
 
 
 
+
+export const getApprovePortalUrl = (projectId: string,) => {
+
+
+
+
+  return `/api/v1/projects/${projectId}/portal/approval`
+}
+
+/**
+ * @summary Approve a client-facing operational approval
+ */
+export const approvePortal = async (projectId: string,
+    portalApprovalInput: PortalApprovalInput, options?: Parameters<typeof customFetch>[1]): Promise<PortalApprovalResult> => {
+
+  return customFetch<PortalApprovalResult>(getApprovePortalUrl(projectId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(portalApprovalInput)
+  }
+);}
+
+
+
+
+
+export const getApprovePortalMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof approvePortal>>, TError,{projectId: string;data: BodyType<PortalApprovalInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof approvePortal>>, TError,{projectId: string;data: BodyType<PortalApprovalInput>}, TContext> => {
+
+const mutationKey = ['approvePortal'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof approvePortal>>, {projectId: string;data: BodyType<PortalApprovalInput>}> = (props) => {
+          const {projectId,data} = props ?? {};
+
+          return  approvePortal(projectId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ApprovePortalMutationResult = NonNullable<Awaited<ReturnType<typeof approvePortal>>>
+    export type ApprovePortalMutationBody = BodyType<PortalApprovalInput>
+    export type ApprovePortalMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Approve a client-facing operational approval
+ */
+export const useApprovePortal = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof approvePortal>>, TError,{projectId: string;data: BodyType<PortalApprovalInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof approvePortal>>,
+        TError,
+        {projectId: string;data: BodyType<PortalApprovalInput>},
+        TContext
+      > => {
+      return useMutation(getApprovePortalMutationOptions(options));
+    }
 
 export const getGetBrandSettingsUrl = () => {
 

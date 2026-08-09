@@ -5,9 +5,12 @@
  * Scopefold provenance-first operations API
  * OpenAPI spec version: 0.1.0
  */
+import type { FoldPreviewMappingsItem } from './foldPreviewMappingsItem';
+import type { Operation } from './operation';
 
 export interface FoldPreview {
   blocked: boolean;
+  committed: boolean;
   milestones: number;
   tasks: number;
   payments: number;
@@ -16,4 +19,6 @@ export interface FoldPreview {
   risks: string[];
   revisionPlan: string;
   evidenceCompleteness: number;
+  mappings: FoldPreviewMappingsItem[];
+  generatedOperations: Operation[];
 }

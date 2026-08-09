@@ -9,11 +9,8 @@ import type { Operation } from './operation';
 import type { Project } from './project';
 import type { Receipt } from './receipt';
 
-export interface PortalView {
+export interface PortalApprovalResult {
   project: Project;
-  milestones: Operation[];
-  payments: Operation[];
-  approvals: Operation[];
-  files: string[];
-  receipts: Receipt[];
+  approval: Operation;
+  receipt: Receipt;
 }

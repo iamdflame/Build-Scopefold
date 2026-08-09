@@ -1,148 +1,2215 @@
-import { type ReactNode, useMemo, useState } from 'react';
-import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
-import { ErrorBoundary } from '@/components/error-boundary';
-import { Toaster } from '@/components/ui/toaster';
-import { TooltipProvider } from '@/components/ui/tooltip';
-import { Link, Route, Switch, Router as WouterRouter, useLocation, useParams } from 'wouter';
-import { ArrowDownRight, ArrowLeft, ArrowRight, BookOpen, Box, Check, CheckCircle2, ChevronRight, CircleAlert, ClipboardCheck, Cloud, Copy, FileText, Filter, Fingerprint, GitBranch, Globe2, Hammer, Landmark, Layers3, LayoutGrid, LifeBuoy, LoaderCircle, Menu, MoreHorizontal, Palette, PanelLeft, Play, Plus, RefreshCw, RotateCcw, Search, Send, Settings2, ShieldCheck, Sparkles, Split, Tag, Terminal, Upload, WalletCards, X, Zap, type LucideIcon } from 'lucide-react';
-import { getGetBootstrapQueryKey, getGetBrandSettingsQueryKey, getGetFoldPreviewQueryKey, getGetLaunchPreflightQueryKey, getGetOperationsQueryKey, getGetPortalQueryKey, getGetProjectQueryKey, getGetProjectReviewQueryKey, getHealthCheckQueryKey, getListProjectsQueryKey, useCommitFold, useGetBootstrap, useGetBrandSettings, useGetFoldPreview, useGetLaunchPreflight, useGetOperations, useGetPortal, useGetProject, useGetProjectReview, useHealthCheck, useLaunchProject, useListProjects, useResetDemo, useResolveAmbiguity, useUpdateBrandSettings } from '@workspace/api-client-react';
+import { type ReactNode, useEffect, useMemo, useState } from "react";
+import {
+  QueryClient,
+  QueryClientProvider,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { ErrorBoundary } from "@/components/error-boundary";
+import { Toaster } from "@/components/ui/toaster";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import {
+  Link,
+  Route,
+  Switch,
+  Router as WouterRouter,
+  useLocation,
+  useParams,
+} from "wouter";
+import {
+  ArrowDownRight,
+  ArrowLeft,
+  ArrowRight,
+  BookOpen,
+  Box,
+  Check,
+  CheckCircle2,
+  ChevronRight,
+  CircleAlert,
+  ClipboardCheck,
+  Cloud,
+  Copy,
+  FileText,
+  Filter,
+  Fingerprint,
+  GitBranch,
+  Globe2,
+  Hammer,
+  Landmark,
+  Layers3,
+  LayoutGrid,
+  LifeBuoy,
+  LoaderCircle,
+  Menu,
+  MoreHorizontal,
+  Palette,
+  PanelLeft,
+  Play,
+  Plus,
+  RefreshCw,
+  RotateCcw,
+  Search,
+  Send,
+  Settings2,
+  ShieldCheck,
+  Sparkles,
+  Split,
+  Tag,
+  Terminal,
+  Upload,
+  WalletCards,
+  X,
+  Zap,
+  type LucideIcon,
+} from "lucide-react";
+import {
+  getGetBootstrapQueryKey,
+  getGetBrandSettingsQueryKey,
+  getGetFoldPreviewQueryKey,
+  getGetLaunchPreflightQueryKey,
+  getGetOperationsQueryKey,
+  getGetPortalQueryKey,
+  getGetProjectQueryKey,
+  getGetProjectReviewQueryKey,
+  getHealthCheckQueryKey,
+  getListProjectsQueryKey,
+  useApprovePortal,
+  useCommitFold,
+  useGetBootstrap,
+  useGetBrandSettings,
+  useGetFoldPreview,
+  useGetLaunchPreflight,
+  useGetOperations,
+  useGetPortal,
+  useGetProject,
+  useGetProjectReview,
+  useHealthCheck,
+  useLaunchProject,
+  useListProjects,
+  useResetDemo,
+  useResolveAmbiguity,
+  useUpdateBrandSettings,
+  type Evidence,
+  type LaunchInputProvider,
+  type Operation,
+} from "@workspace/api-client-react";
 
 const queryClient = new QueryClient();
-const cx = (...items: Array<string | false | undefined>) => items.filter(Boolean).join(' ');
-const money = (cents?: number | null, currency = 'USD') => cents == null ? '—' : new Intl.NumberFormat('en-US', { style: 'currency', currency, maximumFractionDigits: 0 }).format(cents / 100);
-const date = (value?: string | null) => value ? new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(new Date(value)) : 'Unscheduled';
+const cx = (...items: Array<string | false | undefined>) =>
+  items.filter(Boolean).join(" ");
+const money = (cents?: number | null, currency = "USD") =>
+  cents == null
+    ? "—"
+    : new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency,
+        maximumFractionDigits: 0,
+      }).format(cents / 100);
+const date = (value?: string | null) =>
+  value
+    ? new Intl.DateTimeFormat("en-US", {
+        month: "short",
+        day: "numeric",
+      }).format(new Date(value))
+    : "Unscheduled";
 
-function Badge({ children, tone = 'neutral' }: { children: ReactNode; tone?: 'neutral' | 'yellow' | 'green' | 'red' | 'blue' }) {
-  return <span className={cx('inline-flex items-center gap-1 rounded-sm border px-2 py-1 text-[10px] font-semibold uppercase tracking-[.12em]', tone === 'yellow' && 'border-[#b48b2c]/40 bg-[#f6e7a9] text-[#6d5116]', tone === 'green' && 'border-[#2f7665]/30 bg-[#dbeee7] text-[#275f54]', tone === 'red' && 'border-[#a9453e]/30 bg-[#f4d9d4] text-[#8f3932]', tone === 'blue' && 'border-[#385d74]/30 bg-[#dce9ef] text-[#294e64]', tone === 'neutral' && 'border-border bg-muted text-muted-foreground')}>{children}</span>;
+function Badge({
+  children,
+  tone = "neutral",
+}: {
+  children: ReactNode;
+  tone?: "neutral" | "yellow" | "green" | "red" | "blue";
+}) {
+  return (
+    <span
+      className={cx(
+        "inline-flex items-center gap-1 rounded-sm border px-2 py-1 text-[10px] font-semibold uppercase tracking-[.12em]",
+        tone === "yellow" && "border-[#b48b2c]/40 bg-[#f6e7a9] text-[#6d5116]",
+        tone === "green" && "border-[#2f7665]/30 bg-[#dbeee7] text-[#275f54]",
+        tone === "red" && "border-[#a9453e]/30 bg-[#f4d9d4] text-[#8f3932]",
+        tone === "blue" && "border-[#385d74]/30 bg-[#dce9ef] text-[#294e64]",
+        tone === "neutral" && "border-border bg-muted text-muted-foreground",
+      )}
+    >
+      {children}
+    </span>
+  );
 }
-function Button({ children, onClick, variant = 'primary', className, disabled, type = 'button', testId }: { children: ReactNode; onClick?: () => void; variant?: 'primary' | 'outline' | 'ghost' | 'yellow'; className?: string; disabled?: boolean; type?: 'button' | 'submit'; testId?: string }) {
-  return <button data-testid={testId} type={type} disabled={disabled} onClick={onClick} className={cx('inline-flex items-center justify-center gap-2 rounded-sm px-3.5 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50', variant === 'primary' && 'bg-primary text-primary-foreground hover:bg-[#294e64]', variant === 'yellow' && 'bg-accent text-accent-foreground hover:brightness-95', variant === 'outline' && 'border border-border bg-card text-foreground hover:border-primary/50', variant === 'ghost' && 'text-muted-foreground hover:bg-muted hover:text-foreground', className)}>{children}</button>;
+function Button({
+  children,
+  onClick,
+  variant = "primary",
+  className,
+  disabled,
+  type = "button",
+  testId,
+}: {
+  children: ReactNode;
+  onClick?: () => void;
+  variant?: "primary" | "outline" | "ghost" | "yellow";
+  className?: string;
+  disabled?: boolean;
+  type?: "button" | "submit";
+  testId?: string;
+}) {
+  return (
+    <button
+      data-testid={testId}
+      type={type}
+      disabled={disabled}
+      onClick={onClick}
+      className={cx(
+        "inline-flex items-center justify-center gap-2 rounded-sm px-3.5 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50",
+        variant === "primary" &&
+          "bg-primary text-primary-foreground hover:bg-[#294e64]",
+        variant === "yellow" &&
+          "bg-accent text-accent-foreground hover:brightness-95",
+        variant === "outline" &&
+          "border border-border bg-card text-foreground hover:border-primary/50",
+        variant === "ghost" &&
+          "text-muted-foreground hover:bg-muted hover:text-foreground",
+        className,
+      )}
+    >
+      {children}
+    </button>
+  );
 }
-function Skeleton({ className = '' }: { className?: string }) { return <div className={cx('animate-pulse rounded-sm bg-secondary', className)} />; }
-function State({ error, empty = false, retry }: { error?: boolean; empty?: boolean; retry?: () => void }) {
-  return <div className="flex min-h-44 flex-col items-center justify-center gap-3 rounded-sm border border-dashed border-border bg-card p-8 text-center"><CircleAlert className={cx('h-5 w-5', error ? 'text-destructive' : 'text-muted-foreground')} /><p className="text-sm text-muted-foreground">{error ? 'The workspace could not be loaded.' : empty ? 'Nothing has been recorded here yet.' : 'Loading workspace…'}</p>{error && retry && <Button variant="outline" onClick={retry}>Try again</Button>}</div>;
+function Skeleton({ className = "" }: { className?: string }) {
+  return (
+    <div className={cx("animate-pulse rounded-sm bg-secondary", className)} />
+  );
+}
+function State({
+  error,
+  empty = false,
+  retry,
+}: {
+  error?: boolean;
+  empty?: boolean;
+  retry?: () => void;
+}) {
+  return (
+    <div className="flex min-h-44 flex-col items-center justify-center gap-3 rounded-sm border border-dashed border-border bg-card p-8 text-center">
+      <CircleAlert
+        className={cx(
+          "h-5 w-5",
+          error ? "text-destructive" : "text-muted-foreground",
+        )}
+      />
+      <p className="text-sm text-muted-foreground">
+        {error
+          ? "The workspace could not be loaded."
+          : empty
+            ? "Nothing has been recorded here yet."
+            : "Loading workspace…"}
+      </p>
+      {error && retry && (
+        <Button variant="outline" onClick={retry}>
+          Try again
+        </Button>
+      )}
+    </div>
+  );
 }
 
 const nav = [
-  { href: '/projects', label: 'Projects', icon: LayoutGrid },
-  { href: '/new', label: 'New contract', icon: Plus },
+  { href: "/projects", label: "Projects", icon: LayoutGrid },
+  { href: "/new", label: "New contract", icon: Plus },
 ];
 function Shell({ children }: { children: ReactNode }) {
   const [loc, setLoc] = useLocation();
   const [open, setOpen] = useState(false);
-  const { data: health } = useHealthCheck({ query: { queryKey: getHealthCheckQueryKey(), staleTime: 30000 } });
-  const { data: bootstrap } = useGetBootstrap({ query: { queryKey: getGetBootstrapQueryKey(), staleTime: 30000 } });
-  return <div className="paper-grain flex min-h-[100dvh] bg-background">
-    <aside className={cx('fixed inset-y-0 left-0 z-40 flex w-[252px] flex-col bg-sidebar p-5 text-sidebar-foreground transition-transform md:static md:translate-x-0', open ? 'translate-x-0' : '-translate-x-full')}>
-      <div className="flex items-center justify-between border-b border-sidebar-border pb-5"><Link href="/" className="flex items-center gap-3" data-testid="link-brand"><span className="flex h-9 w-9 items-center justify-center rounded-full border border-sidebar-primary/50 text-sidebar-primary"><Fingerprint className="h-4 w-4" /></span><span><span className="block font-serif text-lg">Scopefold</span><span className="mono block text-[9px] uppercase tracking-[.2em] text-sidebar-foreground/55">evidence / operations</span></span></Link><button className="text-sidebar-foreground/60 md:hidden" onClick={() => setOpen(false)} data-testid="button-close-menu"><X className="h-4 w-4" /></button></div>
-       <div className="py-7"><div className="mono mb-3 text-[9px] uppercase tracking-[.2em] text-sidebar-foreground/40">Workspace</div>{nav.map(item => <Link key={item.href} href={item.href} onClick={() => setOpen(false)} data-testid={`link-nav-${item.label.toLowerCase().replaceAll(' ', '-')}`} className={cx('mb-1 flex items-center gap-3 rounded-sm px-3 py-2.5 text-sm', (loc === item.href || (item.href === '/projects' && loc === '/')) ? 'bg-sidebar-accent text-sidebar-primary' : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground')}><item.icon className="h-4 w-4" />{item.label}</Link>)}</div>
-      <div className="mt-auto space-y-1"><Link href="/remix-studio" data-testid="link-remix-studio" className="flex items-center gap-3 rounded-sm px-3 py-2.5 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"><Palette className="h-4 w-4" />Remix studio</Link><Link href="/design-system" data-testid="link-design-system" className="flex items-center gap-3 rounded-sm px-3 py-2.5 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"><Sparkles className="h-4 w-4" />Design system</Link><div className="mt-4 border-t border-sidebar-border pt-4"><div className="mono text-[9px] uppercase tracking-[.18em] text-sidebar-foreground/40">System status</div><div className="mt-2 flex items-center gap-2 text-xs text-sidebar-foreground/70"><span className={cx('h-1.5 w-1.5 rounded-full', health?.status === 'ok' ? 'bg-[#7bc5a8]' : 'bg-accent')} />{health?.status === 'ok' ? 'API connected' : 'Connecting to API'}</div><div className="mt-1 truncate text-[11px] text-sidebar-foreground/40">{bootstrap?.workspace.name ?? 'Demo workspace'}</div></div></div>
-    </aside>
-    {open && <button className="fixed inset-0 z-30 bg-primary/30 md:hidden" onClick={() => setOpen(false)} aria-label="Close navigation" />}
-     <main className="min-w-0 flex-1"><header className="flex h-16 items-center justify-between border-b border-border px-5 md:px-9"><button className="text-muted-foreground md:hidden" onClick={() => setOpen(true)} data-testid="button-open-menu"><Menu className="h-5 w-5" /></button><div className="hidden items-center gap-2 text-xs text-muted-foreground md:flex"><span className="mono text-[10px] uppercase tracking-[.16em]">Workspace /</span><span className="text-foreground">{loc === '/' || loc === '/projects' ? 'Projects ledger' : loc.startsWith('/new') ? 'Contract ingestion' : 'Project workspace'}</span></div><div className="ml-auto flex items-center gap-4"><span className="mono hidden text-[10px] uppercase tracking-[.16em] text-muted-foreground sm:block">{new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span><div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">AP</div></div></header>{children}</main>
-  </div>;
+  const { data: health } = useHealthCheck({
+    query: { queryKey: getHealthCheckQueryKey(), staleTime: 30000 },
+  });
+  const { data: bootstrap } = useGetBootstrap({
+    query: { queryKey: getGetBootstrapQueryKey(), staleTime: 30000 },
+  });
+  return (
+    <div className="paper-grain flex min-h-[100dvh] bg-background">
+      <aside
+        className={cx(
+          "fixed inset-y-0 left-0 z-40 flex w-[252px] flex-col bg-sidebar p-5 text-sidebar-foreground transition-transform md:static md:translate-x-0",
+          open ? "translate-x-0" : "-translate-x-full",
+        )}
+      >
+        <div className="flex items-center justify-between border-b border-sidebar-border pb-5">
+          <Link
+            href="/"
+            className="flex items-center gap-3"
+            data-testid="link-brand"
+          >
+            <span className="flex h-9 w-9 items-center justify-center rounded-full border border-sidebar-primary/50 text-sidebar-primary">
+              <Fingerprint className="h-4 w-4" />
+            </span>
+            <span>
+              <span className="block font-serif text-lg">Scopefold</span>
+              <span className="mono block text-[9px] uppercase tracking-[.2em] text-sidebar-foreground/55">
+                evidence / operations
+              </span>
+            </span>
+          </Link>
+          <button
+            className="text-sidebar-foreground/60 md:hidden"
+            onClick={() => setOpen(false)}
+            aria-label="Close navigation"
+            data-testid="button-close-menu"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="py-7">
+          <div className="mono mb-3 text-[9px] uppercase tracking-[.2em] text-sidebar-foreground/40">
+            Workspace
+          </div>
+          {nav.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={() => setOpen(false)}
+              data-testid={`link-nav-${item.label.toLowerCase().replaceAll(" ", "-")}`}
+              className={cx(
+                "mb-1 flex items-center gap-3 rounded-sm px-3 py-2.5 text-sm",
+                loc === item.href || (item.href === "/projects" && loc === "/")
+                  ? "bg-sidebar-accent text-sidebar-primary"
+                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground",
+              )}
+            >
+              <item.icon className="h-4 w-4" />
+              {item.label}
+            </Link>
+          ))}
+        </div>
+        <div className="mt-auto space-y-1">
+          <Link
+            href="/remix-studio"
+            data-testid="link-remix-studio"
+            className="flex items-center gap-3 rounded-sm px-3 py-2.5 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+          >
+            <Palette className="h-4 w-4" />
+            Remix studio
+          </Link>
+          <Link
+            href="/design-system"
+            data-testid="link-design-system"
+            className="flex items-center gap-3 rounded-sm px-3 py-2.5 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+          >
+            <Sparkles className="h-4 w-4" />
+            Design system
+          </Link>
+          <div className="mt-4 border-t border-sidebar-border pt-4">
+            <div className="mono text-[9px] uppercase tracking-[.18em] text-sidebar-foreground/40">
+              System status
+            </div>
+            <div className="mt-2 flex items-center gap-2 text-xs text-sidebar-foreground/70">
+              <span
+                className={cx(
+                  "h-1.5 w-1.5 rounded-full",
+                  health?.status === "ok" ? "bg-[#7bc5a8]" : "bg-accent",
+                )}
+              />
+              {health?.status === "ok" ? "API connected" : "Connecting to API"}
+            </div>
+            <div className="mt-1 truncate text-[11px] text-sidebar-foreground/40">
+              {bootstrap?.workspace.name ?? "Demo workspace"}
+            </div>
+          </div>
+        </div>
+      </aside>
+      {open && (
+        <button
+          className="fixed inset-0 z-30 bg-primary/30 md:hidden"
+          onClick={() => setOpen(false)}
+          aria-label="Close navigation"
+        />
+      )}
+      <main className="min-w-0 flex-1">
+        <header className="flex h-16 items-center justify-between border-b border-border px-5 md:px-9">
+          <button
+            className="text-muted-foreground md:hidden"
+            onClick={() => setOpen(true)}
+            aria-label="Open navigation"
+            data-testid="button-open-menu"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+          <div className="hidden items-center gap-2 text-xs text-muted-foreground md:flex">
+            <span className="mono text-[10px] uppercase tracking-[.16em]">
+              Workspace /
+            </span>
+            <span className="text-foreground">
+              {loc === "/" || loc === "/projects"
+                ? "Projects ledger"
+                : loc.startsWith("/new")
+                  ? "Contract ingestion"
+                  : "Project workspace"}
+            </span>
+          </div>
+          <div className="ml-auto flex items-center gap-4">
+            <span className="mono hidden text-[10px] uppercase tracking-[.16em] text-muted-foreground sm:block">
+              {new Date().toLocaleDateString("en-US", {
+                weekday: "short",
+                month: "short",
+                day: "numeric",
+              })}
+            </span>
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+              AP
+            </div>
+          </div>
+        </header>
+        {children}
+      </main>
+    </div>
+  );
 }
 
 function Projects() {
-  const { data, isLoading, isError, refetch } = useListProjects(undefined, { query: { queryKey: getListProjectsQueryKey(), staleTime: 20000 } });
+  const { data, isLoading, isError, refetch } = useListProjects(undefined, {
+    query: { queryKey: getListProjectsQueryKey(), staleTime: 20000 },
+  });
   const projects = data ?? [];
-  return <Page className="max-w-7xl"><div className="mb-10 flex flex-col justify-between gap-5 sm:flex-row sm:items-end"><div><div className="eyebrow">Operations ledger / 04</div><h1 className="serif mt-3 text-4xl tracking-tight md:text-5xl">Projects in motion<span className="text-accent">.</span></h1><p className="mt-3 max-w-xl text-sm leading-6 text-muted-foreground">A live register of client commitments, their evidence, and the next irreversible thing.</p></div><Link href="/new" data-testid="link-start-contract"><Button variant="yellow"><Plus className="h-4 w-4" />Start a contract</Button></Link></div>
-    {isLoading ? <div className="space-y-3"><Skeleton className="h-24" /><Skeleton className="h-24" /><Skeleton className="h-24" /></div> : isError ? <State error retry={refetch} /> : projects.length === 0 ? <State empty /> : <div className="space-y-3">{projects.map((p, i) => <Link href={`/p/${p.id}/review`} key={p.id} data-testid={`card-project-${p.id}`} className={cx('group grid grid-cols-1 gap-4 border border-border bg-card p-5 shadow-sm hover:-translate-y-0.5 hover:border-primary/50 md:grid-cols-[1.5fr_1fr_.8fr_.8fr_auto] md:items-center', i === 0 && 'border-l-4 border-l-accent')}><div><div className="mono mb-2 text-[10px] uppercase tracking-[.16em] text-muted-foreground">{p.client.name} / {p.id}</div><h2 className="serif text-xl">{p.name}</h2><div className="mt-2 flex items-center gap-2">{<Badge tone={p.risk === 'high' ? 'red' : p.risk === 'medium' ? 'yellow' : 'green'}>{p.risk} risk</Badge>}<span className="text-xs text-muted-foreground">{p.lifecycle}</span></div></div><div><div className="mono text-[10px] uppercase tracking-[.14em] text-muted-foreground">Progress</div><div className="mt-2 flex items-center gap-3"><div className="h-1.5 flex-1 bg-secondary"><div className="h-full bg-primary" style={{ width: `${p.progress}%` }} /></div><span className="mono text-xs">{p.progress}%</span></div></div><div><div className="mono text-[10px] uppercase tracking-[.14em] text-muted-foreground">Contract value</div><div className="mt-2 text-sm font-semibold">{money(p.valueCents, p.currency)}</div></div><div><div className="mono text-[10px] uppercase tracking-[.14em] text-muted-foreground">Next event</div><div className="mt-2 text-sm">{p.nextEvent}</div></div><ArrowRight className="hidden h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1 md:block" /></Link>)}</div>}
-    <div className="mt-10 grid gap-4 md:grid-cols-3"><Metric icon={ShieldCheck} label="Evidence coverage" value={projects.length ? `${Math.round(projects.reduce((a, p) => a + p.evidenceCompleteness, 0) / projects.length)}%` : '—'} detail="Across active projects" /><Metric icon={GitBranch} label="In fold" value={`${projects.filter(p => p.lifecycle === 'in_fold').length}`} detail="Ready to become operations" /><Metric icon={CircleAlert} label="Needs attention" value={`${projects.filter(p => p.risk !== 'low').length}`} detail="Risk signals requiring a look" /></div>
-  </Page>;
+  return (
+    <Page className="max-w-7xl">
+      <div className="mb-10 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
+        <div>
+          <div className="eyebrow">Operations ledger / 04</div>
+          <h1 className="serif mt-3 text-4xl tracking-tight md:text-5xl">
+            Projects in motion<span className="text-accent">.</span>
+          </h1>
+          <p className="mt-3 max-w-xl text-sm leading-6 text-muted-foreground">
+            A live register of client commitments, their evidence, and the next
+            irreversible thing.
+          </p>
+        </div>
+        <Link href="/new" data-testid="link-start-contract">
+          <Button variant="yellow">
+            <Plus className="h-4 w-4" />
+            Start a contract
+          </Button>
+        </Link>
+      </div>
+      {isLoading ? (
+        <div className="space-y-3">
+          <Skeleton className="h-24" />
+          <Skeleton className="h-24" />
+          <Skeleton className="h-24" />
+        </div>
+      ) : isError ? (
+        <State error retry={refetch} />
+      ) : projects.length === 0 ? (
+        <State empty />
+      ) : (
+        <div className="space-y-3">
+          {projects.map((p, i) => (
+            <Link
+              href={`/p/${p.id}/review`}
+              key={p.id}
+              data-testid={`card-project-${p.id}`}
+              className={cx(
+                "group grid grid-cols-1 gap-4 border border-border bg-card p-5 shadow-sm hover:-translate-y-0.5 hover:border-primary/50 md:grid-cols-[1.5fr_1fr_.8fr_.8fr_auto] md:items-center",
+                i === 0 && "border-l-4 border-l-accent",
+              )}
+            >
+              <div>
+                <div className="mono mb-2 text-[10px] uppercase tracking-[.16em] text-muted-foreground">
+                  {p.client.name} / {p.id}
+                </div>
+                <h2 className="serif text-xl">{p.name}</h2>
+                <div className="mt-2 flex items-center gap-2">
+                  {
+                    <Badge
+                      tone={
+                        p.risk === "high"
+                          ? "red"
+                          : p.risk === "medium"
+                            ? "yellow"
+                            : "green"
+                      }
+                    >
+                      {p.risk} risk
+                    </Badge>
+                  }
+                  <span className="text-xs text-muted-foreground">
+                    {p.lifecycle}
+                  </span>
+                </div>
+              </div>
+              <div>
+                <div className="mono text-[10px] uppercase tracking-[.14em] text-muted-foreground">
+                  Progress
+                </div>
+                <div className="mt-2 flex items-center gap-3">
+                  <div className="h-1.5 flex-1 bg-secondary">
+                    <div
+                      className="h-full bg-primary"
+                      style={{ width: `${p.progress}%` }}
+                    />
+                  </div>
+                  <span className="mono text-xs">{p.progress}%</span>
+                </div>
+              </div>
+              <div>
+                <div className="mono text-[10px] uppercase tracking-[.14em] text-muted-foreground">
+                  Contract value
+                </div>
+                <div className="mt-2 text-sm font-semibold">
+                  {money(p.valueCents, p.currency)}
+                </div>
+              </div>
+              <div>
+                <div className="mono text-[10px] uppercase tracking-[.14em] text-muted-foreground">
+                  Next event
+                </div>
+                <div className="mt-2 text-sm">{p.nextEvent}</div>
+              </div>
+              <ArrowRight className="hidden h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1 md:block" />
+            </Link>
+          ))}
+        </div>
+      )}
+      <div className="mt-10 grid gap-4 md:grid-cols-3">
+        <Metric
+          icon={ShieldCheck}
+          label="Evidence coverage"
+          value={
+            projects.length
+              ? `${Math.round(projects.reduce((a, p) => a + p.evidenceCompleteness, 0) / projects.length)}%`
+              : "—"
+          }
+          detail="Across active projects"
+        />
+        <Metric
+          icon={GitBranch}
+          label="In fold"
+          value={`${projects.filter((p) => p.lifecycle === "in_fold").length}`}
+          detail="Ready to become operations"
+        />
+        <Metric
+          icon={CircleAlert}
+          label="Needs attention"
+          value={`${projects.filter((p) => p.risk !== "low").length}`}
+          detail="Risk signals requiring a look"
+        />
+      </div>
+    </Page>
+  );
 }
-function Metric({ icon: Icon, label, value, detail }: { icon: typeof ShieldCheck; label: string; value: string; detail: string }) { return <div className="border-t-2 border-primary pt-4"><Icon className="h-4 w-4 text-accent" /><div className="mt-3 flex items-end justify-between"><span className="mono text-[10px] uppercase tracking-[.14em] text-muted-foreground">{label}</span><b className="serif text-2xl">{value}</b></div><p className="mt-1 text-xs text-muted-foreground">{detail}</p></div>; }
-function Page({ children, className = '' }: { children: ReactNode; className?: string }) { return <div className={cx('animate-in px-5 py-9 md:px-9 md:py-12', className)}>{children}</div>; }
+function Metric({
+  icon: Icon,
+  label,
+  value,
+  detail,
+}: {
+  icon: typeof ShieldCheck;
+  label: string;
+  value: string;
+  detail: string;
+}) {
+  return (
+    <div className="border-t-2 border-primary pt-4">
+      <Icon className="h-4 w-4 text-accent" />
+      <div className="mt-3 flex items-end justify-between">
+        <span className="mono text-[10px] uppercase tracking-[.14em] text-muted-foreground">
+          {label}
+        </span>
+        <b className="serif text-2xl">{value}</b>
+      </div>
+      <p className="mt-1 text-xs text-muted-foreground">{detail}</p>
+    </div>
+  );
+}
+function Page({
+  children,
+  className = "",
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={cx("animate-in px-5 py-9 md:px-9 md:py-12", className)}>
+      {children}
+    </div>
+  );
+}
 
 function NewContract() {
-  const [selected, setSelected] = useState('upload');
-  return <Page className="max-w-5xl"><div className="eyebrow">Contract ingestion / 01</div><div className="mt-3 grid gap-10 md:grid-cols-[1fr_1.25fr]"><div><h1 className="serif text-4xl leading-tight md:text-5xl">Start with what was actually agreed.</h1><p className="mt-5 text-sm leading-7 text-muted-foreground">Bring in the source document. Scopefold will separate evidence from interpretation before it asks operations to move.</p><div className="mt-10 border-l-2 border-accent pl-4"><p className="serif text-lg leading-7">“The contract is not a summary. It is the source of truth we can point back to.”</p><p className="mono mt-3 text-[10px] uppercase tracking-[.14em] text-muted-foreground">Scopefold principle / 01</p></div></div><div className="space-y-3"><Choice id="upload" icon={Upload} title="Upload a source document" detail="PDF, DOCX, or a signed export. We will preserve page references." selected={selected} setSelected={setSelected} /><Choice id="workspace" icon={Cloud} title="Connect a workspace folder" detail="Pull the latest contract from your existing source of record." selected={selected} setSelected={setSelected} /><Choice id="sample" icon={BookOpen} title="Open the Harbor & Pine sample" detail="A guided contract is ready when you want to see the full fold." selected={selected} setSelected={setSelected} /><div className="mt-7 flex justify-end"><Link href="/p/harbor-pine/review" data-testid="link-continue-ingestion"><Button variant="yellow">{selected === 'sample' ? 'Open sample contract' : 'Continue'}<ArrowRight className="h-4 w-4" /></Button></Link></div></div></div></Page>;
+  const [selected, setSelected] = useState("upload");
+  return (
+    <Page className="max-w-5xl">
+      <div className="eyebrow">Contract ingestion / 01</div>
+      <div className="mt-3 grid gap-10 md:grid-cols-[1fr_1.25fr]">
+        <div>
+          <h1 className="serif text-4xl leading-tight md:text-5xl">
+            Start with what was actually agreed.
+          </h1>
+          <p className="mt-5 text-sm leading-7 text-muted-foreground">
+            Bring in the source document. Scopefold will separate evidence from
+            interpretation before it asks operations to move.
+          </p>
+          <div className="mt-10 border-l-2 border-accent pl-4">
+            <p className="serif text-lg leading-7">
+              “The contract is not a summary. It is the source of truth we can
+              point back to.”
+            </p>
+            <p className="mono mt-3 text-[10px] uppercase tracking-[.14em] text-muted-foreground">
+              Scopefold principle / 01
+            </p>
+          </div>
+        </div>
+        <div className="space-y-3">
+          <Choice
+            id="upload"
+            icon={Upload}
+            title="Upload a source document"
+            detail="PDF, DOCX, or a signed export. We will preserve page references."
+            selected={selected}
+            setSelected={setSelected}
+          />
+          <Choice
+            id="workspace"
+            icon={Cloud}
+            title="Connect a workspace folder"
+            detail="Pull the latest contract from your existing source of record."
+            selected={selected}
+            setSelected={setSelected}
+          />
+          <Choice
+            id="sample"
+            icon={BookOpen}
+            title="Open the Harbor & Pine sample"
+            detail="A guided contract is ready when you want to see the full fold."
+            selected={selected}
+            setSelected={setSelected}
+          />
+          <div className="mt-7 flex justify-end">
+            <Link
+              href="/p/harbor-pine/review"
+              data-testid="link-continue-ingestion"
+            >
+              <Button variant="yellow">
+                {selected === "sample" ? "Open sample contract" : "Continue"}
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    </Page>
+  );
 }
-function Choice({ id, icon: Icon, title, detail, selected, setSelected }: { id: string; icon: LucideIcon; title: string; detail: string; selected: string; setSelected: (s: string) => void }) { return <button data-testid={`button-ingestion-${id}`} onClick={() => setSelected(id)} className={cx('flex w-full items-start gap-4 border p-5 text-left', selected === id ? 'border-primary bg-card shadow-sm' : 'border-border bg-background hover:border-primary/40')}><span className={cx('mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-sm', selected === id ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground')}><Icon className="h-4 w-4" /></span><span><strong className="block text-sm">{title}</strong><span className="mt-1 block text-xs leading-5 text-muted-foreground">{detail}</span></span><span className={cx('ml-auto mt-1 h-3 w-3 rounded-full border', selected === id && 'border-4 border-accent bg-primary')} /></button>; }
+function Choice({
+  id,
+  icon: Icon,
+  title,
+  detail,
+  selected,
+  setSelected,
+}: {
+  id: string;
+  icon: LucideIcon;
+  title: string;
+  detail: string;
+  selected: string;
+  setSelected: (s: string) => void;
+}) {
+  return (
+    <button
+      data-testid={`button-ingestion-${id}`}
+      onClick={() => setSelected(id)}
+      className={cx(
+        "flex w-full items-start gap-4 border p-5 text-left",
+        selected === id
+          ? "border-primary bg-card shadow-sm"
+          : "border-border bg-background hover:border-primary/40",
+      )}
+    >
+      <span
+        className={cx(
+          "mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-sm",
+          selected === id
+            ? "bg-primary text-primary-foreground"
+            : "bg-secondary text-muted-foreground",
+        )}
+      >
+        <Icon className="h-4 w-4" />
+      </span>
+      <span>
+        <strong className="block text-sm">{title}</strong>
+        <span className="mt-1 block text-xs leading-5 text-muted-foreground">
+          {detail}
+        </span>
+      </span>
+      <span
+        className={cx(
+          "ml-auto mt-1 h-3 w-3 rounded-full border",
+          selected === id && "border-4 border-accent bg-primary",
+        )}
+      />
+    </button>
+  );
+}
 
 function ProjectHeader({ id, active }: { id: string; active: string }) {
-  const { data } = useGetProject(id, { query: { enabled: !!id, queryKey: getGetProjectQueryKey(id) } });
+  const { data } = useGetProject(id, {
+    query: { enabled: !!id, queryKey: getGetProjectQueryKey(id) },
+  });
   const p = data?.project;
-  const tabs: Array<[string, string, LucideIcon]> = [['review','Review',FileText],['fold','Fold',Split],['operations','Operations',Layers3],['launch','Launch',Zap]];
-  return <><div className="mb-7 flex items-start justify-between gap-4"><div><Link href="/" className="mono inline-flex items-center gap-1 text-[10px] uppercase tracking-[.14em] text-muted-foreground hover:text-foreground" data-testid="link-back-projects"><ArrowLeft className="h-3 w-3" />Projects ledger</Link><div className="eyebrow mt-5">{p?.client.name ?? 'Project'} / {id}</div><h1 className="serif mt-2 text-3xl md:text-4xl">{p?.name ?? 'Loading project'}</h1></div><Button variant="outline" className="hidden sm:inline-flex"><MoreHorizontal className="h-4 w-4" />Actions</Button></div><div className="mb-9 flex gap-1 overflow-x-auto border-b border-border pb-px">{tabs.map(([path, label, Icon]) => <Link key={path} href={`/p/${id}/${path}`} data-testid={`link-project-${path}`} className={cx('flex shrink-0 items-center gap-2 border-b-2 px-3 pb-3 text-xs font-semibold', active === path ? 'border-accent text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground')}><Icon className="h-3.5 w-3.5" />{label}</Link>)}</div></>;
+  const tabs: Array<[string, string, LucideIcon]> = [
+    ["review", "Review", FileText],
+    ["fold", "Fold", Split],
+    ["operations", "Operations", Layers3],
+    ["launch", "Launch", Zap],
+  ];
+  return (
+    <>
+      <div className="mb-7 flex items-start justify-between gap-4">
+        <div>
+          <Link
+            href="/"
+            className="mono inline-flex items-center gap-1 text-[10px] uppercase tracking-[.14em] text-muted-foreground hover:text-foreground"
+            data-testid="link-back-projects"
+          >
+            <ArrowLeft className="h-3 w-3" />
+            Projects ledger
+          </Link>
+          <div className="eyebrow mt-5">
+            {p?.client.name ?? "Project"} / {id}
+          </div>
+          <h1 className="serif mt-2 text-3xl md:text-4xl">
+            {p?.name ?? "Loading project"}
+          </h1>
+        </div>
+        <Button variant="outline" className="hidden sm:inline-flex">
+          <MoreHorizontal className="h-4 w-4" />
+          Actions
+        </Button>
+      </div>
+      <div className="mb-9 flex gap-1 overflow-x-auto border-b border-border pb-px">
+        {tabs.map(([path, label, Icon]) => (
+          <Link
+            key={path}
+            href={`/p/${id}/${path}`}
+            data-testid={`link-project-${path}`}
+            className={cx(
+              "flex shrink-0 items-center gap-2 border-b-2 px-3 pb-3 text-xs font-semibold",
+              active === path
+                ? "border-accent text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground",
+            )}
+          >
+            <Icon className="h-3.5 w-3.5" />
+            {label}
+          </Link>
+        ))}
+      </div>
+    </>
+  );
 }
 function Review() {
-  const { id = 'harbor-pine' } = useParams<{ id: string }>();
-  const { data, isLoading, isError, refetch } = useGetProjectReview(id, { query: { enabled: !!id, queryKey: getGetProjectReviewQueryKey(id) } });
+  const { id = "harbor-pine" } = useParams<{ id: string }>();
+  const { data, isLoading, isError, refetch } = useGetProjectReview(id, {
+    query: { enabled: !!id, queryKey: getGetProjectReviewQueryKey(id) },
+  });
   const resolve = useResolveAmbiguity();
   const [drawer, setDrawer] = useState<string | null>(null);
   const [resolved, setResolved] = useState<string[]>([]);
-  if (isLoading) return <Page><Skeleton className="h-8 w-48" /><Skeleton className="mt-8 h-96" /></Page>;
-  if (isError || !data) return <Page><State error retry={refetch} /></Page>;
+  if (isLoading)
+    return (
+      <Page>
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="mt-8 h-96" />
+      </Page>
+    );
+  if (isError || !data)
+    return (
+      <Page>
+        <State error retry={refetch} />
+      </Page>
+    );
   const ambiguities = data.ambiguities ?? [];
-  return <Page className="max-w-7xl"><ProjectHeader id={id} active="review" /><div className="grid gap-7 lg:grid-cols-[1.1fr_.9fr]"><section className="min-w-0 border border-border bg-card"><div className="flex items-center justify-between border-b border-border px-5 py-4"><div><div className="eyebrow">Source document</div><h2 className="mt-1 text-sm font-semibold">{data.documentName}</h2></div><Button variant="outline"><DownloadIcon />Source</Button></div><article className="prose prose-sm max-w-none p-6 font-serif leading-8 text-foreground/85 md:p-10">{data.documentText.split('\\n').map((line, i) => <p key={i} className="relative">{line || <br />}{data.evidence[i % Math.max(1, data.evidence.length)] && <button onClick={() => setDrawer(data.evidence[i % data.evidence.length].id)} className="ml-2 inline-flex translate-y-[-1px] items-center gap-1 rounded-sm bg-[#f6e7a9] px-1.5 py-0.5 align-middle font-sans text-[9px] font-bold uppercase tracking-[.1em] text-[#6d5116]" data-testid={`button-evidence-${i}`}>§ {data.evidence[i % data.evidence.length].page}</button>}</p>)}</article></section><aside className="space-y-4"><div className="border border-border bg-card p-5"><div className="flex items-center justify-between"><div><div className="eyebrow">Evidence register</div><h2 className="mt-1 text-lg">What we can prove</h2></div><Badge tone="yellow">{data.evidence.length} items</Badge></div><div className="mt-5 space-y-2">{data.evidence.map(e => <button key={e.id} onClick={() => setDrawer(e.id)} data-testid={`button-open-evidence-${e.id}`} className="group flex w-full items-start gap-3 border-t border-border pt-3 text-left"><span className="mono mt-0.5 text-[10px] text-muted-foreground">p.{e.page}</span><span className="min-w-0"><span className="block text-xs font-semibold">{e.clause}</span><span className="mt-1 line-clamp-2 block text-[11px] leading-4 text-muted-foreground">“{e.quote}”</span></span><ChevronRight className="ml-auto h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-1" /></button>)}</div></div><div className="border border-[#b48b2c]/35 bg-[#fbf4d8] p-5"><div className="flex items-center gap-2"><CircleAlert className="h-4 w-4 text-[#9b741d]" /><div className="eyebrow text-[#765c1c]">Ambiguity queue</div></div><p className="mt-2 text-sm leading-5 text-[#6d5116]">Resolve these before the fold can create downstream operations.</p><div className="mt-4 space-y-2">{ambiguities.map(a => <div key={a.id} className="border-t border-[#d6bd69]/50 pt-3"><div className="flex items-start justify-between gap-2"><p className="text-xs font-semibold text-[#5c481a]">{a.question}</p>{(a.resolved || resolved.includes(a.id)) ? <Badge tone="green">Resolved</Badge> : <Button variant="outline" className="px-2 py-1 text-[10px]" onClick={() => setDrawer(`ambiguity:${a.id}`)}>{'Resolve'}</Button>}</div></div>)}</div></div><div className="border border-border bg-primary p-5 text-primary-foreground"><div className="eyebrow text-primary-foreground/60">Review status</div><div className="mt-2 flex items-end justify-between"><span className="serif text-2xl">{data.obligations.length} obligations</span><Badge tone={ambiguities.some(a => !a.resolved && !resolved.includes(a.id)) ? 'yellow' : 'green'}>{ambiguities.some(a => !a.resolved && !resolved.includes(a.id)) ? 'Blocked' : 'Ready'}</Badge></div><Link href={`/p/${id}/fold`} data-testid="link-go-fold" className="mt-5 flex items-center justify-between border-t border-primary-foreground/20 pt-4 text-xs font-semibold">Preview the fold <ArrowRight className="h-4 w-4" /></Link></div></aside></div>{drawer && <EvidenceDrawer id={drawer} data={data} close={() => setDrawer(null)} onResolved={(amb, option) => { resolve.mutate({ projectId: id, data: { ambiguityId: amb, optionId: option } }, { onSuccess: () => { setResolved(v => [...v, amb]); setDrawer(null); queryClient.invalidateQueries({ queryKey: getGetProjectReviewQueryKey(id) }); } }); }} />}</Page>;
+  return (
+    <Page className="max-w-7xl">
+      <ProjectHeader id={id} active="review" />
+      <div className="grid gap-7 lg:grid-cols-[1.1fr_.9fr]">
+        <section className="min-w-0 border border-border bg-card">
+          <div className="flex items-center justify-between border-b border-border px-5 py-4">
+            <div>
+              <div className="eyebrow">Source document</div>
+              <h2 className="mt-1 text-sm font-semibold">
+                {data.documentName}
+              </h2>
+            </div>
+            <Button variant="outline">
+              <DownloadIcon />
+              Source
+            </Button>
+          </div>
+          <article className="prose prose-sm max-w-none p-6 font-serif leading-8 text-foreground/85 md:p-10">
+            {data.documentText.split("\\n").map((line, i) => (
+              <p key={i} className="relative">
+                {line || <br />}
+                {data.evidence[i % Math.max(1, data.evidence.length)] && (
+                  <button
+                    onClick={() =>
+                      setDrawer(data.evidence[i % data.evidence.length].id)
+                    }
+                    className="ml-2 inline-flex translate-y-[-1px] items-center gap-1 rounded-sm bg-[#f6e7a9] px-1.5 py-0.5 align-middle font-sans text-[9px] font-bold uppercase tracking-[.1em] text-[#6d5116]"
+                    data-testid={`button-evidence-${i}`}
+                  >
+                    § {data.evidence[i % data.evidence.length].page}
+                  </button>
+                )}
+              </p>
+            ))}
+          </article>
+        </section>
+        <aside className="space-y-4">
+          <div className="border border-border bg-card p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="eyebrow">Evidence register</div>
+                <h2 className="mt-1 text-lg">What we can prove</h2>
+              </div>
+              <Badge tone="yellow">{data.evidence.length} items</Badge>
+            </div>
+            <div className="mt-5 space-y-2">
+              {data.evidence.map((e) => (
+                <button
+                  key={e.id}
+                  onClick={() => setDrawer(e.id)}
+                  data-testid={`button-open-evidence-${e.id}`}
+                  className="group flex w-full items-start gap-3 border-t border-border pt-3 text-left"
+                >
+                  <span className="mono mt-0.5 text-[10px] text-muted-foreground">
+                    p.{e.page}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-xs font-semibold">
+                      {e.clause}
+                    </span>
+                    <span className="mt-1 line-clamp-2 block text-[11px] leading-4 text-muted-foreground">
+                      “{e.quote}”
+                    </span>
+                  </span>
+                  <ChevronRight className="ml-auto h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-1" />
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="border border-[#b48b2c]/35 bg-[#fbf4d8] p-5">
+            <div className="flex items-center gap-2">
+              <CircleAlert className="h-4 w-4 text-[#9b741d]" />
+              <div className="eyebrow text-[#765c1c]">Ambiguity queue</div>
+            </div>
+            <p className="mt-2 text-sm leading-5 text-[#6d5116]">
+              Resolve these before the fold can create downstream operations.
+            </p>
+            <div className="mt-4 space-y-2">
+              {ambiguities.map((a) => (
+                <div key={a.id} className="border-t border-[#d6bd69]/50 pt-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-xs font-semibold text-[#5c481a]">
+                      {a.question}
+                    </p>
+                    {a.resolved || resolved.includes(a.id) ? (
+                      <Badge tone="green">Resolved</Badge>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        className="px-2 py-1 text-[10px]"
+                        onClick={() => setDrawer(`ambiguity:${a.id}`)}
+                      >
+                        {"Resolve"}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="border border-border bg-primary p-5 text-primary-foreground">
+            <div className="eyebrow text-primary-foreground/60">
+              Review status
+            </div>
+            <div className="mt-2 flex items-end justify-between">
+              <span className="serif text-2xl">
+                {data.obligations.length} obligations
+              </span>
+              <Badge
+                tone={
+                  ambiguities.some(
+                    (a) => !a.resolved && !resolved.includes(a.id),
+                  )
+                    ? "yellow"
+                    : "green"
+                }
+              >
+                {ambiguities.some(
+                  (a) => !a.resolved && !resolved.includes(a.id),
+                )
+                  ? "Blocked"
+                  : "Ready"}
+              </Badge>
+            </div>
+            <Link
+              href={`/p/${id}/fold`}
+              data-testid="link-go-fold"
+              className="mt-5 flex items-center justify-between border-t border-primary-foreground/20 pt-4 text-xs font-semibold"
+            >
+              Preview the fold <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+        </aside>
+      </div>
+      {drawer && (
+        <EvidenceDrawer
+          id={drawer}
+          data={data}
+          close={() => setDrawer(null)}
+          onResolved={(amb, option) => {
+            resolve.mutate(
+              { projectId: id, data: { ambiguityId: amb, optionId: option } },
+              {
+                onSuccess: () => {
+                  setResolved((v) => [...v, amb]);
+                  setDrawer(null);
+                  queryClient.invalidateQueries({
+                    queryKey: getGetProjectReviewQueryKey(id),
+                  });
+                },
+              },
+            );
+          }}
+        />
+      )}
+    </Page>
+  );
 }
-function DownloadIcon() { return <Copy className="h-4 w-4" />; }
-function EvidenceDrawer({ id, data, close, onResolved }: { id: string; data: any; close: () => void; onResolved: (a: string, o: string) => void }) {
-  const ambiguity = id.startsWith('ambiguity:') ? data.ambiguities.find((a: any) => a.id === id.slice(10)) : null;
-  const evidence = !ambiguity ? data.evidence.find((e: any) => e.id === id) : null;
-  return <div className="fixed inset-0 z-50 flex justify-end bg-primary/25" onClick={close}><div className="h-full w-full max-w-md overflow-y-auto border-l border-border bg-card p-6 shadow-2xl" onClick={e => e.stopPropagation()}><div className="flex items-center justify-between"><div className="eyebrow">{ambiguity ? 'Resolve ambiguity' : 'Evidence detail'}</div><button onClick={close} data-testid="button-close-drawer"><X className="h-5 w-5 text-muted-foreground" /></button></div>{ambiguity ? <><h2 className="serif mt-5 text-2xl">{ambiguity.question}</h2><blockquote className="mt-5 border-l-2 border-accent pl-4 text-sm italic leading-6 text-muted-foreground">“{ambiguity.quote}”</blockquote><div className="mt-7 space-y-3">{ambiguity.options.map((o: any) => <button key={o.id} onClick={() => onResolved(ambiguity.id, o.id)} data-testid={`button-resolve-${o.id}`} className="w-full border border-border p-4 text-left hover:border-primary"><div className="flex items-center justify-between"><strong className="text-sm">{o.title}</strong><ArrowRight className="h-4 w-4 text-muted-foreground" /></div><p className="mt-2 text-xs leading-5 text-muted-foreground">{o.summary}</p><p className="mt-3 mono text-[10px] uppercase tracking-[.12em] text-[#8f3932]">Impact / {o.impact}</p></button>)}</div></> : evidence && <><div className="mono mt-5 text-xs text-muted-foreground">{evidence.source} · page {evidence.page}</div><h2 className="serif mt-4 text-2xl">{evidence.clause}</h2><blockquote className="mt-8 border-l-2 border-accent bg-[#fbf4d8] p-5 text-base italic leading-7 text-[#51431d]">“{evidence.quote}”</blockquote><div className="mt-8 grid grid-cols-2 gap-3"><div className="border border-border p-3"><div className="eyebrow">Classified as</div><div className="mt-2 text-sm font-semibold">{evidence.classification}</div></div><div className="border border-border p-3"><div className="eyebrow">Review</div><div className="mt-2 flex items-center gap-2 text-sm font-semibold"><CheckCircle2 className="h-4 w-4 text-[#2f7665]" />{evidence.reviewed ? 'Reviewed' : 'Needs review'}</div></div></div></>}</div></div>;
+function DownloadIcon() {
+  return <Copy className="h-4 w-4" />;
+}
+function EvidenceDrawer({
+  id,
+  data,
+  close,
+  onResolved,
+}: {
+  id: string;
+  data: any;
+  close: () => void;
+  onResolved: (a: string, o: string) => void;
+}) {
+  const ambiguity = id.startsWith("ambiguity:")
+    ? data.ambiguities.find((a: any) => a.id === id.slice(10))
+    : null;
+  const evidence = !ambiguity
+    ? data.evidence.find((e: any) => e.id === id)
+    : null;
+  return (
+    <div
+      className="fixed inset-0 z-50 flex justify-end bg-primary/25"
+      onClick={close}
+    >
+      <div
+        className="h-full w-full max-w-md overflow-y-auto border-l border-border bg-card p-6 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between">
+          <div className="eyebrow">
+            {ambiguity ? "Resolve ambiguity" : "Evidence detail"}
+          </div>
+          <button
+            onClick={close}
+            aria-label="Close evidence"
+            data-testid="button-close-drawer"
+          >
+            <X className="h-5 w-5 text-muted-foreground" />
+          </button>
+        </div>
+        {ambiguity ? (
+          <>
+            <h2 className="serif mt-5 text-2xl">{ambiguity.question}</h2>
+            <blockquote className="mt-5 border-l-2 border-accent pl-4 text-sm italic leading-6 text-muted-foreground">
+              “{ambiguity.quote}”
+            </blockquote>
+            <div className="mt-7 space-y-3">
+              {ambiguity.options.map((o: any) => (
+                <button
+                  key={o.id}
+                  onClick={() => onResolved(ambiguity.id, o.id)}
+                  data-testid={`button-resolve-${o.id}`}
+                  className="w-full border border-border p-4 text-left hover:border-primary"
+                >
+                  <div className="flex items-center justify-between">
+                    <strong className="text-sm">{o.title}</strong>
+                    <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                    {o.summary}
+                  </p>
+                  <p className="mt-3 mono text-[10px] uppercase tracking-[.12em] text-[#8f3932]">
+                    Impact / {o.impact}
+                  </p>
+                </button>
+              ))}
+            </div>
+          </>
+        ) : (
+          evidence && (
+            <>
+              <div className="mono mt-5 text-xs text-muted-foreground">
+                {evidence.source} · page {evidence.page}
+              </div>
+              <h2 className="serif mt-4 text-2xl">{evidence.clause}</h2>
+              <blockquote className="mt-8 border-l-2 border-accent bg-[#fbf4d8] p-5 text-base italic leading-7 text-[#51431d]">
+                “{evidence.quote}”
+              </blockquote>
+              <div className="mt-8 grid grid-cols-2 gap-3">
+                <div className="border border-border p-3">
+                  <div className="eyebrow">Classified as</div>
+                  <div className="mt-2 text-sm font-semibold">
+                    {evidence.classification}
+                  </div>
+                </div>
+                <div className="border border-border p-3">
+                  <div className="eyebrow">Review</div>
+                  <div className="mt-2 flex items-center gap-2 text-sm font-semibold">
+                    <CheckCircle2 className="h-4 w-4 text-[#2f7665]" />
+                    {evidence.reviewed ? "Reviewed" : "Needs review"}
+                  </div>
+                </div>
+              </div>
+            </>
+          )
+        )}
+      </div>
+    </div>
+  );
 }
 
 function Fold() {
-  const { id = 'harbor-pine' } = useParams<{ id: string }>();
-  const { data: preview, isLoading, isError, refetch } = useGetFoldPreview(id, { query: { enabled: !!id, queryKey: getGetFoldPreviewQueryKey(id) } });
+  const { id = "harbor-pine" } = useParams<{ id: string }>();
+  const {
+    data: preview,
+    isLoading,
+    isError,
+    refetch,
+  } = useGetFoldPreview(id, {
+    query: { enabled: !!id, queryKey: getGetFoldPreviewQueryKey(id) },
+  });
   const commit = useCommitFold();
-  const [done, setDone] = useState(false);
-  if (isLoading) return <Page><Skeleton className="h-72" /></Page>;
-  if (isError || !preview) return <Page><State error retry={refetch} /></Page>;
-  const output: Array<[string, number, LucideIcon]> = [['Milestones', preview.milestones, Landmark],['Tasks', preview.tasks, ClipboardCheck],['Payments', preview.payments, WalletCards],['Approvals', preview.approvals, ShieldCheck],['Dependencies', preview.dependencies, GitBranch]];
-  return <Page className="max-w-6xl"><ProjectHeader id={id} active="fold" /><div className="grid gap-8 lg:grid-cols-[.82fr_1.18fr]"><div><div className="eyebrow">Deterministic transformation</div><h2 className="serif mt-3 text-4xl leading-tight">From clause<br />to cadence.</h2><p className="mt-5 max-w-sm text-sm leading-6 text-muted-foreground">The fold turns reviewed obligations into accountable, source-linked operations. No silent assumptions. No black box.</p><div className="mt-8 border border-border bg-card p-5"><div className="mono text-[10px] uppercase tracking-[.14em] text-muted-foreground">Revision plan</div><p className="mt-3 text-sm leading-6">{preview.revisionPlan}</p></div>{preview.risks.length > 0 && <div className="mt-3 border border-[#b48b2c]/35 bg-[#fbf4d8] p-5"><div className="flex items-center gap-2 text-[#765c1c]"><CircleAlert className="h-4 w-4" /><span className="eyebrow">Known risks</span></div><ul className="mt-3 space-y-2 text-xs text-[#6d5116]">{preview.risks.map(r => <li key={r} className="flex gap-2"><span>—</span>{r}</li>)}</ul></div>}</div><div className="border border-border bg-card p-6 md:p-8"><div className="flex items-start justify-between border-b border-border pb-5"><div><div className="eyebrow">Output preview</div><h2 className="mt-2 text-xl">Operational objects</h2></div><Badge tone={preview.blocked ? 'yellow' : 'green'}>{preview.blocked ? 'Blocked' : 'Ready to fold'}</Badge></div><div className="mt-7 grid grid-cols-2 gap-px bg-border sm:grid-cols-5">{output.map(([label, value, Icon]) => <div key={label} className="bg-card p-4"><Icon className="h-4 w-4 text-accent" /><div className="serif mt-5 text-3xl">{value}</div><div className="mono mt-1 text-[9px] uppercase tracking-[.1em] text-muted-foreground">{label}</div></div>)}</div><div className="mt-8 border-l-2 border-accent bg-background p-4 text-sm leading-6 text-muted-foreground">Every object will carry its originating evidence identifier into the operations workspace.</div><Button disabled={preview.blocked || commit.isPending || done} onClick={() => commit.mutate({ projectId: id }, { onSuccess: () => { setDone(true); queryClient.invalidateQueries({ queryKey: getGetOperationsQueryKey(id) }); } })} variant="yellow" className="mt-8 w-full" testId="button-commit-fold">{commit.isPending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : done ? <Check className="h-4 w-4" /> : <Zap className="h-4 w-4" />}{done ? 'Fold committed' : 'Commit this fold'}</Button>{done && <Link href={`/p/${id}/operations`} data-testid="link-view-operations" className="mt-4 flex items-center justify-center gap-2 text-xs font-semibold">View operations <ArrowRight className="h-4 w-4" /></Link>}</div></div></Page>;
+  if (isLoading)
+    return (
+      <Page>
+        <Skeleton className="h-72" />
+      </Page>
+    );
+  if (isError || !preview)
+    return (
+      <Page>
+        <State error retry={refetch} />
+      </Page>
+    );
+  const output: Array<[string, number, LucideIcon]> = [
+    ["Milestones", preview.milestones, Landmark],
+    ["Tasks", preview.tasks, ClipboardCheck],
+    ["Payments", preview.payments, WalletCards],
+    ["Approvals", preview.approvals, ShieldCheck],
+    ["Dependencies", preview.dependencies, GitBranch],
+  ];
+  const generatedHighlights = preview.generatedOperations.filter(
+    (operation, index, operations) =>
+      operations.findIndex((item) => item.type === operation.type) === index,
+  );
+  return (
+    <Page className="max-w-6xl">
+      <ProjectHeader id={id} active="fold" />
+      <div className="grid gap-8 lg:grid-cols-[.82fr_1.18fr]">
+        <div>
+          <div className="eyebrow">Deterministic transformation</div>
+          <h2 className="serif mt-3 text-4xl leading-tight">
+            From clause
+            <br />
+            to cadence.
+          </h2>
+          <p className="mt-5 max-w-sm text-sm leading-6 text-muted-foreground">
+            The fold turns reviewed obligations into accountable, source-linked
+            operations. No silent assumptions. No black box.
+          </p>
+          <div className="mt-8 border border-border bg-card p-5">
+            <div className="mono text-[10px] uppercase tracking-[.14em] text-muted-foreground">
+              Revision plan
+            </div>
+            <p className="mt-3 text-sm leading-6">{preview.revisionPlan}</p>
+          </div>
+          {preview.risks.length > 0 && (
+            <div className="mt-3 border border-[#b48b2c]/35 bg-[#fbf4d8] p-5">
+              <div className="flex items-center gap-2 text-[#765c1c]">
+                <CircleAlert className="h-4 w-4" />
+                <span className="eyebrow">Known risks</span>
+              </div>
+              <ul className="mt-3 space-y-2 text-xs text-[#6d5116]">
+                {preview.risks.map((r) => (
+                  <li key={r} className="flex gap-2">
+                    <span>—</span>
+                    {r}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+        <div className="border border-border bg-card p-6 md:p-8">
+          <div className="flex items-start justify-between border-b border-border pb-5">
+            <div>
+              <div className="eyebrow">Output preview</div>
+              <h2 className="mt-2 text-xl">Operational objects</h2>
+            </div>
+            <Badge tone={preview.blocked ? "yellow" : "green"}>
+              {preview.blocked
+                ? "Blocked"
+                : preview.committed
+                  ? "Committed"
+                  : "Ready to fold"}
+            </Badge>
+          </div>
+          <div className="mt-7 grid grid-cols-2 gap-px bg-border sm:grid-cols-5">
+            {output.map(([label, value, Icon]) => (
+              <div key={label} className="bg-card p-4">
+                <Icon className="h-4 w-4 text-accent" />
+                <div className="serif mt-5 text-3xl">{value}</div>
+                <div className="mono mt-1 text-[9px] uppercase tracking-[.1em] text-muted-foreground">
+                  {label}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-8 border-l-2 border-accent bg-background p-4 text-sm leading-6 text-muted-foreground">
+            Every object will carry its originating evidence identifier into the
+            operations workspace.
+          </div>
+          <Button
+            disabled={preview.blocked || commit.isPending || preview.committed}
+            onClick={() =>
+              commit.mutate(
+                { projectId: id },
+                {
+                  onSuccess: () => {
+                    queryClient.invalidateQueries({
+                      queryKey: getGetFoldPreviewQueryKey(id),
+                    });
+                    queryClient.invalidateQueries({
+                      queryKey: getGetOperationsQueryKey(id),
+                    });
+                    queryClient.invalidateQueries({
+                      queryKey: getGetProjectQueryKey(id),
+                    });
+                    queryClient.invalidateQueries({
+                      queryKey: getGetLaunchPreflightQueryKey(id),
+                    });
+                  },
+                },
+              )
+            }
+            variant="yellow"
+            className="mt-8 w-full"
+            testId="button-commit-fold"
+          >
+            {commit.isPending ? (
+              <LoaderCircle className="h-4 w-4 animate-spin" />
+            ) : preview.committed ? (
+              <Check className="h-4 w-4" />
+            ) : (
+              <Zap className="h-4 w-4" />
+            )}
+            {preview.committed ? "Fold committed" : "Commit this fold"}
+          </Button>
+          {preview.committed && (
+            <div className="mt-8 border-t border-border pt-7">
+              <div className="flex items-end justify-between gap-4">
+                <div>
+                  <div className="eyebrow">Committed transformation</div>
+                  <h3 className="mt-2 text-lg font-semibold">
+                    Generated records
+                  </h3>
+                </div>
+                <Badge tone="green">Persisted</Badge>
+              </div>
+              <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                {generatedHighlights.map((operation) => (
+                  <div
+                    key={operation.id}
+                    className="border border-border bg-background p-3"
+                  >
+                    <div className="mono text-[9px] uppercase tracking-[.12em] text-muted-foreground">
+                      {operation.type} · {operation.sourceEvidenceId}
+                    </div>
+                    <div className="mt-2 text-xs font-semibold">
+                      {operation.title}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-7">
+                <div className="eyebrow">Source → operation mappings</div>
+                <div className="mt-3 space-y-3">
+                  {preview.mappings.slice(0, 4).map((mapping) => (
+                    <div
+                      key={mapping.operationId}
+                      className="grid gap-3 border-t border-border pt-3 sm:grid-cols-[1fr_auto_1fr] sm:items-center"
+                    >
+                      <div>
+                        <div className="mono text-[9px] uppercase tracking-[.12em] text-muted-foreground">
+                          {mapping.evidenceId}
+                        </div>
+                        <div className="mt-1 text-xs font-semibold">
+                          {mapping.sourceLabel}
+                        </div>
+                        <p className="mt-1 line-clamp-2 text-[10px] leading-4 text-muted-foreground">
+                          “{mapping.sourceQuote}”
+                        </p>
+                      </div>
+                      <ArrowDownRight className="hidden h-4 w-4 text-accent sm:block" />
+                      <div>
+                        <div className="mono text-[9px] uppercase tracking-[.12em] text-muted-foreground">
+                          {mapping.operationType}
+                        </div>
+                        <div className="mt-1 text-xs font-semibold">
+                          {mapping.operationTitle}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <Link
+                href={`/p/${id}/operations`}
+                data-testid="link-view-operations"
+                className="mt-7 flex items-center justify-center gap-2 text-xs font-semibold"
+              >
+                View generated operations <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          )}
+        </div>
+      </div>
+    </Page>
+  );
 }
 
 function Operations() {
-  const { id = 'harbor-pine' } = useParams<{ id: string }>();
-  const { data, isLoading, isError, refetch } = useGetOperations(id, { query: { enabled: !!id, queryKey: getGetOperationsQueryKey(id) } });
-  const [tab, setTab] = useState('All');
-  if (isLoading) return <Page><Skeleton className="h-72" /></Page>;
-  if (isError || !data) return <Page><State error retry={refetch} /></Page>;
-  const all = [...(data.milestones ?? []), ...(data.operations ?? [])];
-  const shown = tab === 'All' ? all : all.filter(o => o.type.toLowerCase() === tab.toLowerCase().slice(0, -1));
-  return <Page className="max-w-7xl"><ProjectHeader id={id} active="operations" /><div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><div className="eyebrow">Operations workspace</div><h2 className="serif mt-2 text-4xl">The work, made accountable.</h2></div><Link href={`/p/${id}/launch`} data-testid="link-go-launch"><Button variant="yellow"><Play className="h-4 w-4" />Prepare launch</Button></Link></div><div className="mb-5 flex gap-2 overflow-x-auto">{['All','Milestones','Tasks','Payments','Approvals','Dependencies'].map(t => <button key={t} onClick={() => setTab(t)} data-testid={`button-filter-${t.toLowerCase()}`} className={cx('rounded-sm border px-3 py-2 text-xs font-semibold', tab === t ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card text-muted-foreground')}>{t}</button>)}</div><div className="overflow-hidden border border-border bg-card"><div className="hidden grid-cols-[1.35fr_.7fr_.7fr_.7fr_30px] gap-4 border-b border-border bg-secondary/50 px-5 py-3 mono text-[9px] uppercase tracking-[.14em] text-muted-foreground md:grid"><span>Operation</span><span>Type</span><span>Due</span><span>Status</span><span /></div>{shown.length === 0 ? <State empty /> : shown.map(o => <div key={o.id} data-testid={`row-operation-${o.id}`} className="grid grid-cols-1 gap-3 border-b border-border px-5 py-4 last:border-0 md:grid-cols-[1.35fr_.7fr_.7fr_.7fr_30px] md:items-center md:gap-4"><div><div className="flex items-center gap-2"><span className="flex h-6 w-6 items-center justify-center rounded-full bg-secondary"><ClipboardCheck className="h-3 w-3 text-primary" /></span><span className="text-sm font-semibold">{o.title}</span></div><p className="mt-1 pl-8 text-xs text-muted-foreground">{o.detail}</p></div><div className="pl-8 text-xs text-muted-foreground md:pl-0">{o.type}</div><div className="pl-8 text-xs md:pl-0">{date(o.dueDate)}</div><div className="pl-8 md:pl-0"><Badge tone={o.status === 'complete' ? 'green' : o.status === 'blocked' ? 'red' : 'yellow'}>{o.status}</Badge></div><button className="hidden text-muted-foreground md:block" data-testid={`button-operation-menu-${o.id}`}><MoreHorizontal className="h-4 w-4" /></button></div>)}</div><div className="mt-8 grid gap-4 md:grid-cols-3"><MiniPanel icon={WalletCards} title="Payments" items={all.filter(o => o.type === 'payment').map(o => `${o.title} · ${money(o.amountCents, data.project.currency)}`)} /><MiniPanel icon={ShieldCheck} title="Approvals" items={all.filter(o => o.type === 'approval').map(o => o.title)} /><MiniPanel icon={Fingerprint} title="Receipts" items={(data.receipts ?? []).slice(0, 3).map(r => `${r.provider} · ${r.status}`)} /></div></Page>;
+  const { id = "harbor-pine" } = useParams<{ id: string }>();
+  const { data, isLoading, isError, refetch } = useGetOperations(id, {
+    query: { enabled: !!id, queryKey: getGetOperationsQueryKey(id) },
+  });
+  const [tab, setTab] = useState("All");
+  const [selectedOperationId, setSelectedOperationId] = useState<string | null>(
+    null,
+  );
+  if (isLoading)
+    return (
+      <Page>
+        <Skeleton className="h-72" />
+      </Page>
+    );
+  if (isError || !data)
+    return (
+      <Page>
+        <State error retry={refetch} />
+      </Page>
+    );
+  const all = data.operations ?? [];
+  const shown =
+    tab === "All"
+      ? all
+      : all.filter(
+          (o) => o.type.toLowerCase() === tab.toLowerCase().slice(0, -1),
+        );
+  const selectedOperation = all.find(
+    (operation) => operation.id === selectedOperationId,
+  );
+  const selectedEvidence = data.evidence.find(
+    (item) => item.id === selectedOperation?.sourceEvidenceId,
+  );
+  return (
+    <Page className="max-w-7xl">
+      <ProjectHeader id={id} active="operations" />
+      <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+        <div>
+          <div className="eyebrow">Operations workspace</div>
+          <h2 className="serif mt-2 text-4xl">The work, made accountable.</h2>
+        </div>
+        <Link href={`/p/${id}/launch`} data-testid="link-go-launch">
+          <Button variant="yellow">
+            <Play className="h-4 w-4" />
+            Prepare launch
+          </Button>
+        </Link>
+      </div>
+      <div className="mb-5 flex gap-2 overflow-x-auto">
+        {[
+          "All",
+          "Milestones",
+          "Tasks",
+          "Payments",
+          "Approvals",
+          "Dependencies",
+        ].map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            data-testid={`button-filter-${t.toLowerCase()}`}
+            className={cx(
+              "rounded-sm border px-3 py-2 text-xs font-semibold",
+              tab === t
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-border bg-card text-muted-foreground",
+            )}
+          >
+            {t}
+          </button>
+        ))}
+      </div>
+      <div className="overflow-hidden border border-border bg-card">
+        <div className="hidden grid-cols-[1.35fr_.7fr_.7fr_.7fr_110px] gap-4 border-b border-border bg-secondary/50 px-5 py-3 mono text-[9px] uppercase tracking-[.14em] text-muted-foreground md:grid">
+          <span>Operation</span>
+          <span>Type</span>
+          <span>Due</span>
+          <span>Status</span>
+          <span />
+        </div>
+        {shown.length === 0 ? (
+          <State empty />
+        ) : (
+          shown.map((o) => (
+            <div
+              key={o.id}
+              data-testid={`row-operation-${o.id}`}
+              className="grid grid-cols-1 gap-3 border-b border-border px-5 py-4 last:border-0 md:grid-cols-[1.35fr_.7fr_.7fr_.7fr_110px] md:items-center md:gap-4"
+            >
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-secondary">
+                    <ClipboardCheck className="h-3 w-3 text-primary" />
+                  </span>
+                  <span className="text-sm font-semibold">{o.title}</span>
+                </div>
+                <p className="mt-1 pl-8 text-xs text-muted-foreground">
+                  {o.detail}
+                </p>
+              </div>
+              <div className="pl-8 text-xs text-muted-foreground md:pl-0">
+                {o.type}
+              </div>
+              <div className="pl-8 text-xs md:pl-0">{date(o.dueDate)}</div>
+              <div className="pl-8 md:pl-0">
+                <Badge
+                  tone={
+                    ["complete", "approved", "ready"].some((status) =>
+                      o.status.toLowerCase().includes(status),
+                    )
+                      ? "green"
+                      : o.status.toLowerCase().includes("block")
+                        ? "red"
+                        : "yellow"
+                  }
+                >
+                  {o.status}
+                </Badge>
+              </div>
+              <button
+                className="ml-8 inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary/70 md:ml-0"
+                onClick={() => setSelectedOperationId(o.id)}
+                aria-label={`View evidence for ${o.title}`}
+                data-testid={`button-operation-evidence-${o.id}`}
+              >
+                <Fingerprint className="h-3.5 w-3.5" />
+                Evidence
+              </button>
+            </div>
+          ))
+        )}
+      </div>
+      <div className="mt-8 grid gap-4 md:grid-cols-3">
+        <MiniPanel
+          icon={WalletCards}
+          title="Payments"
+          items={all
+            .filter((o) => o.type === "payment")
+            .map(
+              (o) =>
+                `${o.title} · ${money(o.amountCents, data.project.currency)}`,
+            )}
+        />
+        <MiniPanel
+          icon={ShieldCheck}
+          title="Approvals"
+          items={all.filter((o) => o.type === "approval").map((o) => o.title)}
+        />
+        <MiniPanel
+          icon={Fingerprint}
+          title="Receipts"
+          items={(data.receipts ?? [])
+            .slice(0, 3)
+            .map(
+              (r) =>
+                `${r.provider} · ${r.mode} ${r.status === "Succeeded" ? "Success" : r.status}`,
+            )}
+        />
+      </div>
+      {selectedOperation && (
+        <OperationEvidenceDrawer
+          operation={selectedOperation}
+          evidence={selectedEvidence}
+          projectId={id}
+          close={() => setSelectedOperationId(null)}
+        />
+      )}
+    </Page>
+  );
 }
-function MiniPanel({ icon: Icon, title, items }: { icon: typeof WalletCards; title: string; items: string[] }) { return <div className="border border-border bg-card p-5"><div className="flex items-center gap-2"><Icon className="h-4 w-4 text-accent" /><div className="eyebrow">{title}</div></div>{items.length ? <div className="mt-4 space-y-2">{items.map(i => <div key={i} className="border-t border-border pt-2 text-xs">{i}</div>)}</div> : <p className="mt-4 text-xs text-muted-foreground">No linked records.</p>}</div>; }
+
+function OperationEvidenceDrawer({
+  operation,
+  evidence,
+  projectId,
+  close,
+}: {
+  operation: Operation;
+  evidence?: Evidence;
+  projectId: string;
+  close: () => void;
+}) {
+  useEffect(() => {
+    const onKeyDown = (event: globalThis.KeyboardEvent) => {
+      if (event.key === "Escape") close();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [close]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex justify-end bg-primary/30"
+      onClick={close}
+    >
+      <aside
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={`operation-evidence-title-${operation.id}`}
+        className="h-full w-full max-w-md overflow-y-auto border-l border-border bg-card p-6 shadow-2xl"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-center justify-between gap-4">
+          <div className="eyebrow">Source → operation</div>
+          <button
+            autoFocus
+            onClick={close}
+            aria-label="Close evidence"
+            className="text-muted-foreground hover:text-foreground"
+            data-testid="button-close-operation-evidence"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <h2
+          id={`operation-evidence-title-${operation.id}`}
+          className="serif mt-5 text-2xl"
+        >
+          {operation.title}
+        </h2>
+        {evidence ? (
+          <>
+            <div className="mono mt-4 text-[10px] uppercase tracking-[.14em] text-muted-foreground">
+              {evidence.id} · page {evidence.page} · {evidence.classification}
+            </div>
+            <blockquote className="mt-7 border-l-2 border-accent bg-[#fbf4d8] p-5 text-sm italic leading-6 text-[#51431d]">
+              “{evidence.quote}”
+            </blockquote>
+            <div className="mt-7 border border-border p-4">
+              <div className="eyebrow">Derived object</div>
+              <div className="mt-3 flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-sm font-semibold">{operation.title}</div>
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    {operation.type} · {operation.detail}
+                  </div>
+                </div>
+                <Badge tone="green">{operation.status}</Badge>
+              </div>
+            </div>
+            <div className="mt-7">
+              <div className="eyebrow">Proof chain</div>
+              <ol className="mt-3 space-y-2 text-xs text-muted-foreground">
+                <li>01 · {evidence.clause}</li>
+                <li>02 · Reviewed obligation</li>
+                <li>03 · {operation.type}</li>
+                <li>04 · {operation.title}</li>
+              </ol>
+            </div>
+          </>
+        ) : (
+          <p className="mt-6 text-sm text-muted-foreground">
+            The source record for this operation is unavailable.
+          </p>
+        )}
+        <Link
+          href={`/p/${projectId}/review`}
+          className="mt-8 inline-flex items-center gap-2 text-sm font-semibold text-primary"
+          data-testid="link-operation-source-review"
+        >
+          Open source in Review <ArrowRight className="h-4 w-4" />
+        </Link>
+      </aside>
+    </div>
+  );
+}
+function MiniPanel({
+  icon: Icon,
+  title,
+  items,
+}: {
+  icon: typeof WalletCards;
+  title: string;
+  items: string[];
+}) {
+  return (
+    <div className="border border-border bg-card p-5">
+      <div className="flex items-center gap-2">
+        <Icon className="h-4 w-4 text-accent" />
+        <div className="eyebrow">{title}</div>
+      </div>
+      {items.length ? (
+        <div className="mt-4 space-y-2">
+          {items.map((i) => (
+            <div key={i} className="border-t border-border pt-2 text-xs">
+              {i}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="mt-4 text-xs text-muted-foreground">No linked records.</p>
+      )}
+    </div>
+  );
+}
 
 function Launch() {
-  const { id = 'harbor-pine' } = useParams<{ id: string }>();
-  const { data, isLoading, isError, refetch } = useGetLaunchPreflight(id, { query: { enabled: !!id, queryKey: getGetLaunchPreflightQueryKey(id) } });
+  const { id = "harbor-pine" } = useParams<{ id: string }>();
+  const { data, isLoading, isError, refetch } = useGetLaunchPreflight(id, {
+    query: { enabled: !!id, queryKey: getGetLaunchPreflightQueryKey(id) },
+  });
   const launch = useLaunchProject();
-  const [receipts, setReceipts] = useState<any[]>([]);
-  if (isLoading) return <Page><Skeleton className="h-72" /></Page>;
-  if (isError || !data) return <Page><State error retry={refetch} /></Page>;
-  return <Page className="max-w-6xl"><ProjectHeader id={id} active="launch" /><div className="mb-8"><div className="eyebrow">Provider preflight</div><h2 className="serif mt-2 text-4xl">Make the next move<br />with a receipt.</h2><p className="mt-4 max-w-xl text-sm leading-6 text-muted-foreground">Each provider action runs independently. A failure does not erase the actions that succeeded, and every result returns with its proof chain.</p></div><div className="grid gap-7 lg:grid-cols-[1fr_.8fr]"><div className="space-y-3">{data.providers.map((p, i) => { const runnable = p.state === 'ready' || p.state === 'simulated'; return <div key={p.name} className="border border-border bg-card p-5"><div className="flex items-center justify-between gap-3"><div className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-sm bg-secondary">{p.name.toLowerCase().includes('stripe') ? <WalletCards className="h-4 w-4" /> : p.name.toLowerCase().includes('notion') ? <BookOpen className="h-4 w-4" /> : <Cloud className="h-4 w-4" />}</span><div><h3 className="text-sm font-semibold">{p.name}</h3><p className="mt-1 text-xs text-muted-foreground">{p.action} {p.destination ? `→ ${p.destination}` : ''}</p></div></div><Badge tone={runnable ? 'green' : 'yellow'}>{p.mode === 'Simulated' ? 'Simulated' : p.state}</Badge></div><div className="mt-5 flex items-center justify-between border-t border-border pt-3"><span className="mono text-[10px] uppercase tracking-[.12em] text-muted-foreground">{p.mode} · {p.objectCount ?? 0} objects</span><Button disabled={!runnable || launch.isPending || data.blocked} onClick={() => launch.mutate({ projectId: id, data: { idempotencyKey: `${id}-${p.name}-${Date.now()}` } }, { onSuccess: r => setReceipts(v => [...v, ...(r.receipts ?? [])]) })} variant="outline" testId={`button-launch-${i}`}>{launch.isPending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}Run action</Button></div></div>; })}{data.blocked && <div className="border border-[#a9453e]/30 bg-[#f4d9d4] p-4 text-sm text-[#8f3932]"><CircleAlert className="mr-2 inline h-4 w-4" />Preflight is blocked. Resolve the issue in Review before launching.</div>}</div><div className="border border-border bg-primary p-6 text-primary-foreground"><div className="eyebrow text-primary-foreground/60">Proof chain</div><h3 className="serif mt-2 text-2xl">Receipts, not promises.</h3><p className="mt-3 text-xs leading-5 text-primary-foreground/65">Launch receipts will collect here as independent actions complete.</p>{receipts.length === 0 ? <div className="mt-8 border border-dashed border-primary-foreground/25 p-5 text-center"><Fingerprint className="mx-auto h-5 w-5 text-accent" /><p className="mt-3 text-xs text-primary-foreground/60">No receipts yet.</p></div> : <div className="mt-6 space-y-3">{receipts.map((r, i) => <div key={`${r.id}-${i}`} className="border-t border-primary-foreground/20 pt-3"><div className="flex justify-between gap-2 text-xs"><b>{r.provider}</b><Badge tone="green">{r.status}</Badge></div><p className="mt-1 text-[11px] text-primary-foreground/60">{r.action} · {new Date(r.timestamp).toLocaleTimeString()}</p><p className="mt-2 text-[11px] italic text-primary-foreground/75">“{r.sourceQuote}” · p.{r.page}</p></div>)}</div>}</div></div></Page>;
+  if (isLoading)
+    return (
+      <Page>
+        <Skeleton className="h-72" />
+      </Page>
+    );
+  if (isError || !data)
+    return (
+      <Page>
+        <State error retry={refetch} />
+      </Page>
+    );
+  const receipts = data.receipts ?? [];
+  return (
+    <Page className="max-w-6xl">
+      <ProjectHeader id={id} active="launch" />
+      <div className="mb-8">
+        <div className="eyebrow">Provider preflight</div>
+        <h2 className="serif mt-2 text-4xl">
+          Make the next move
+          <br />
+          with a receipt.
+        </h2>
+        <p className="mt-4 max-w-xl text-sm leading-6 text-muted-foreground">
+          Each provider action runs independently. A failure does not erase the
+          actions that succeeded, and every result returns with its proof chain.
+        </p>
+      </div>
+      <div className="grid gap-7 lg:grid-cols-[1fr_.8fr]">
+        <div className="space-y-3">
+          {data.providers.map((p, i) => {
+            const runnable = p.state === "ready" || p.state === "simulated";
+            const completed = receipts.some(
+              (receipt) => receipt.provider === p.name,
+            );
+            return (
+              <div key={p.name} className="border border-border bg-card p-5">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-sm bg-secondary">
+                      {p.name.toLowerCase().includes("stripe") ? (
+                        <WalletCards className="h-4 w-4" />
+                      ) : p.name.toLowerCase().includes("notion") ? (
+                        <BookOpen className="h-4 w-4" />
+                      ) : (
+                        <Cloud className="h-4 w-4" />
+                      )}
+                    </span>
+                    <div>
+                      <h3 className="text-sm font-semibold">{p.name}</h3>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {p.action} {p.destination ? `→ ${p.destination}` : ""}
+                      </p>
+                    </div>
+                  </div>
+                  <Badge tone={completed ? "green" : "yellow"}>
+                    {p.mode} {completed ? "· Complete" : ""}
+                  </Badge>
+                </div>
+                <div className="mt-5 flex items-center justify-between border-t border-border pt-3">
+                  <span className="mono text-[10px] uppercase tracking-[.12em] text-muted-foreground">
+                    {p.mode} · {p.objectCount ?? 0} objects
+                  </span>
+                  <Button
+                    disabled={
+                      completed || !runnable || launch.isPending || data.blocked
+                    }
+                    onClick={() =>
+                      launch.mutate(
+                        {
+                          projectId: id,
+                          data: {
+                            provider: p.name as LaunchInputProvider,
+                            idempotencyKey: `${id}:${p.name.toLowerCase()}:v1`,
+                          },
+                        },
+                        {
+                          onSuccess: () => {
+                            queryClient.invalidateQueries({
+                              queryKey: getGetLaunchPreflightQueryKey(id),
+                            });
+                            queryClient.invalidateQueries({
+                              queryKey: getGetOperationsQueryKey(id),
+                            });
+                            queryClient.invalidateQueries({
+                              queryKey: getGetProjectQueryKey(id),
+                            });
+                          },
+                        },
+                      )
+                    }
+                    variant="outline"
+                    testId={`button-launch-${i}`}
+                  >
+                    {completed ? (
+                      <Check className="h-4 w-4" />
+                    ) : launch.isPending ? (
+                      <LoaderCircle className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
+                    {completed ? "Completed" : "Run action"}
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
+          {data.blocked && (
+            <div className="border border-[#a9453e]/30 bg-[#f4d9d4] p-4 text-sm text-[#8f3932]">
+              <CircleAlert className="mr-2 inline h-4 w-4" />
+              Preflight is blocked. Resolve the issue in Review before
+              launching.
+            </div>
+          )}
+        </div>
+        <div
+          className="border border-border bg-primary p-6 text-primary-foreground"
+          aria-live="polite"
+        >
+          <div className="eyebrow text-primary-foreground/60">Proof chain</div>
+          <h3 className="serif mt-2 text-2xl">Receipts, not promises.</h3>
+          <p className="mt-3 text-xs leading-5 text-primary-foreground/65">
+            Launch receipts will collect here as independent actions complete.
+          </p>
+          {receipts.length === 0 ? (
+            <div className="mt-8 border border-dashed border-primary-foreground/25 p-5 text-center">
+              <Fingerprint className="mx-auto h-5 w-5 text-accent" />
+              <p className="mt-3 text-xs text-primary-foreground/60">
+                No receipts yet.
+              </p>
+            </div>
+          ) : (
+            <div className="mt-6 space-y-3">
+              {receipts.map((r) => (
+                <div
+                  key={r.id}
+                  className="border-t border-primary-foreground/20 pt-3"
+                >
+                  <div className="flex justify-between gap-2 text-xs">
+                    <b>{r.provider}</b>
+                    <Badge tone="green">
+                      {r.mode} {r.status === "Succeeded" ? "Success" : r.status}
+                    </Badge>
+                  </div>
+                  <p className="mt-1 text-[11px] text-primary-foreground/60">
+                    {r.action} · {r.objectCount} objects ·{" "}
+                    {new Date(r.timestamp).toLocaleTimeString()}
+                  </p>
+                  <p className="mt-2 text-[11px] italic text-primary-foreground/75">
+                    “{r.sourceQuote}” · p.{r.page}
+                  </p>
+                  <p className="mono mt-2 break-all text-[9px] uppercase tracking-[.1em] text-primary-foreground/45">
+                    {r.objectIds.join(" · ")}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </Page>
+  );
 }
 
 function Portal() {
-  const { token = 'harbor-pine' } = useParams<{ token: string }>();
-  const { data, isLoading, isError, refetch } = useGetPortal(token, { query: { enabled: !!token, queryKey: getGetPortalQueryKey(token) } });
-  if (isLoading) return <div className="min-h-[100dvh] p-8"><Skeleton className="h-72" /></div>;
-  if (isError || !data) return <div className="min-h-[100dvh] p-8"><State error retry={refetch} /></div>;
-  return <div className="min-h-[100dvh] bg-[#f5f0e6] text-[#193441]"><header className="border-b border-[#d7cdbc] px-6 py-5 md:px-16"><div className="mx-auto flex max-w-5xl items-center justify-between"><div className="flex items-center gap-3"><span className="flex h-8 w-8 items-center justify-center rounded-full border border-[#193441]"><Fingerprint className="h-4 w-4" /></span><span className="font-serif text-lg">Scopefold</span></div><span className="mono text-[10px] uppercase tracking-[.18em] text-[#66756f]">Client view / {data.project.client.name}</span></div></header><main className="mx-auto max-w-5xl px-6 py-12 md:px-16 md:py-20"><div className="eyebrow">A project by {data.project.client.name}</div><h1 className="serif mt-4 max-w-2xl text-5xl leading-tight md:text-7xl">{data.project.name}<span className="text-[#b48b2c]">.</span></h1><p className="mt-5 text-sm text-[#66756f]">A clear view of where the work is, what is next, and what is already agreed.</p><div className="mt-12 grid gap-4 sm:grid-cols-3"><Metric icon={LayoutGrid} label="Progress" value={`${data.project.progress}%`} detail={data.project.lifecycle} /><Metric icon={Landmark} label="Next event" value={data.project.nextEvent} detail="Upcoming" /><Metric icon={ShieldCheck} label="Evidence" value={`${data.project.evidenceCompleteness}%`} detail="Source coverage" /></div><section className="mt-16"><div className="eyebrow">Milestones</div><div className="mt-5 divide-y divide-[#d7cdbc] border-y border-[#d7cdbc]">{data.milestones.map((m, i) => <div key={m.id} className="flex items-center gap-4 py-5"><span className={cx('flex h-8 w-8 items-center justify-center rounded-full border', m.status === 'complete' ? 'border-[#2f7665] bg-[#dbeee7] text-[#2f7665]' : 'border-[#b48b2c] text-[#b48b2c]')}>{m.status === 'complete' ? <Check className="h-4 w-4" /> : <span className="mono text-xs">{String(i + 1).padStart(2, '0')}</span>}</span><div className="flex-1"><h3 className="text-sm font-semibold">{m.title}</h3><p className="mt-1 text-xs text-[#66756f]">{m.detail}</p></div><span className="mono text-[10px] uppercase tracking-[.12em] text-[#66756f]">{date(m.dueDate)}</span></div>)}</div></section><div className="mt-12 grid gap-4 md:grid-cols-2"><MiniPanel icon={WalletCards} title="Payments" items={data.payments.map(p => `${p.title} · ${money(p.amountCents, data.project.currency)}`)} /><MiniPanel icon={ShieldCheck} title="Approvals" items={data.approvals.map(a => a.title)} /></div></main></div>;
+  const { token = "harbor-pine" } = useParams<{ token: string }>();
+  const { data, isLoading, isError, refetch } = useGetPortal(token, {
+    query: { enabled: !!token, queryKey: getGetPortalQueryKey(token) },
+  });
+  const approve = useApprovePortal();
+  if (isLoading)
+    return (
+      <div className="min-h-[100dvh] p-8">
+        <Skeleton className="h-72" />
+      </div>
+    );
+  if (isError || !data)
+    return (
+      <div className="min-h-[100dvh] p-8">
+        <State error retry={refetch} />
+      </div>
+    );
+  const approval = data.approvals[0];
+  const approved = approval?.status.toLowerCase() === "approved";
+  return (
+    <div className="min-h-[100dvh] bg-[#f5f0e6] text-[#193441]">
+      <header className="border-b border-[#d7cdbc] px-6 py-5 md:px-16">
+        <div className="mx-auto flex max-w-5xl items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="flex h-8 w-8 items-center justify-center rounded-full border border-[#193441]">
+              <Fingerprint className="h-4 w-4" />
+            </span>
+            <span className="font-serif text-lg">Scopefold</span>
+          </div>
+          <span className="mono text-[10px] uppercase tracking-[.18em] text-[#66756f]">
+            Client view / {data.project.client.name}
+          </span>
+        </div>
+      </header>
+      <main className="mx-auto max-w-5xl px-6 py-12 md:px-16 md:py-20">
+        <div className="eyebrow">A project by {data.project.client.name}</div>
+        <h1 className="serif mt-4 max-w-2xl text-5xl leading-tight md:text-7xl">
+          {data.project.name}
+          <span className="text-[#b48b2c]">.</span>
+        </h1>
+        <p className="mt-5 text-sm text-[#66756f]">
+          A clear view of where the work is, what is next, and what is already
+          agreed.
+        </p>
+        <div className="mt-12 grid gap-4 sm:grid-cols-3">
+          <Metric
+            icon={LayoutGrid}
+            label="Progress"
+            value={`${data.project.progress}%`}
+            detail={data.project.lifecycle}
+          />
+          <Metric
+            icon={Landmark}
+            label="Next event"
+            value={data.project.nextEvent}
+            detail="Upcoming"
+          />
+          <Metric
+            icon={ShieldCheck}
+            label="Evidence"
+            value={`${data.project.evidenceCompleteness}%`}
+            detail="Source coverage"
+          />
+        </div>
+        <section className="mt-16">
+          <div className="eyebrow">Milestones</div>
+          <div className="mt-5 divide-y divide-[#d7cdbc] border-y border-[#d7cdbc]">
+            {data.milestones.map((m, i) => (
+              <div key={m.id} className="flex items-center gap-4 py-5">
+                <span
+                  className={cx(
+                    "flex h-8 w-8 items-center justify-center rounded-full border",
+                    m.status === "complete"
+                      ? "border-[#2f7665] bg-[#dbeee7] text-[#2f7665]"
+                      : "border-[#b48b2c] text-[#b48b2c]",
+                  )}
+                >
+                  {m.status === "complete" ? (
+                    <Check className="h-4 w-4" />
+                  ) : (
+                    <span className="mono text-xs">
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                  )}
+                </span>
+                <div className="flex-1">
+                  <h3 className="text-sm font-semibold">{m.title}</h3>
+                  <p className="mt-1 text-xs text-[#66756f]">{m.detail}</p>
+                </div>
+                <span className="mono text-[10px] uppercase tracking-[.12em] text-[#66756f]">
+                  {date(m.dueDate)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+        <div className="mt-12 grid gap-4 md:grid-cols-2">
+          <MiniPanel
+            icon={WalletCards}
+            title="Payments"
+            items={data.payments.map(
+              (p) =>
+                `${p.title} · ${money(p.amountCents, data.project.currency)}`,
+            )}
+          />
+          <div
+            className="border border-[#d7cdbc] bg-[#fffaf0] p-5"
+            aria-live="polite"
+          >
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-[#b48b2c]" />
+              <div className="eyebrow">Approvals</div>
+            </div>
+            {approval ? (
+              <div className="mt-4 border-t border-[#d7cdbc] pt-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-semibold">
+                      {approval.title}
+                    </div>
+                    <p className="mt-1 text-xs leading-5 text-[#66756f]">
+                      {approval.detail}
+                    </p>
+                  </div>
+                  <span
+                    className={cx(
+                      "mono shrink-0 border px-2 py-1 text-[9px] uppercase tracking-[.12em]",
+                      approved
+                        ? "border-[#2f7665]/30 bg-[#dbeee7] text-[#275f54]"
+                        : "border-[#b48b2c]/40 bg-[#f6e7a9] text-[#6d5116]",
+                    )}
+                  >
+                    {approval.status}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  disabled={approved || approve.isPending}
+                  onClick={() =>
+                    approve.mutate(
+                      {
+                        projectId: token,
+                        data: {
+                          approvalId: approval.id,
+                          idempotencyKey: `${token}:portal:${approval.id}:v1`,
+                        },
+                      },
+                      {
+                        onSuccess: () => {
+                          queryClient.invalidateQueries({
+                            queryKey: getGetPortalQueryKey(token),
+                          });
+                          queryClient.invalidateQueries({
+                            queryKey: getGetOperationsQueryKey(token),
+                          });
+                          queryClient.invalidateQueries({
+                            queryKey: getGetProjectQueryKey(token),
+                          });
+                        },
+                      },
+                    )
+                  }
+                  className="mt-5 inline-flex w-full items-center justify-center gap-2 bg-[#193441] px-4 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+                  data-testid="button-portal-approve"
+                >
+                  {approve.isPending ? (
+                    <LoaderCircle className="h-4 w-4 animate-spin" />
+                  ) : approved ? (
+                    <Check className="h-4 w-4" />
+                  ) : (
+                    <ShieldCheck className="h-4 w-4" />
+                  )}
+                  {approved ? "Approval recorded" : "Approve brand strategy"}
+                </button>
+              </div>
+            ) : (
+              <p className="mt-4 text-xs text-[#66756f]">
+                No approval is currently requested.
+              </p>
+            )}
+          </div>
+        </div>
+        {data.receipts.length > 0 && (
+          <section className="mt-12 border-t border-[#d7cdbc] pt-8">
+            <div className="eyebrow">Approval receipt</div>
+            {data.receipts.map((receipt) => (
+              <div
+                key={receipt.id}
+                className="mt-4 grid gap-4 border border-[#d7cdbc] bg-[#193441] p-5 text-white sm:grid-cols-[1fr_auto]"
+              >
+                <div>
+                  <div className="text-sm font-semibold">{receipt.action}</div>
+                  <p className="mt-2 text-xs italic leading-5 text-white/65">
+                    “{receipt.sourceQuote}” · p.{receipt.page}
+                  </p>
+                </div>
+                <div className="mono text-[9px] uppercase tracking-[.12em] text-[#e7c85e]">
+                  {receipt.mode}{" "}
+                  {receipt.status === "Succeeded" ? "Success" : receipt.status}
+                </div>
+              </div>
+            ))}
+          </section>
+        )}
+      </main>
+    </div>
+  );
 }
 
 function Remix() {
-  const { data, isLoading, isError, refetch } = useGetBrandSettings({ query: { queryKey: getGetBrandSettingsQueryKey() } });
+  const { data, isLoading, isError, refetch } = useGetBrandSettings({
+    query: { queryKey: getGetBrandSettingsQueryKey() },
+  });
   const update = useUpdateBrandSettings();
   const reset = useResetDemo();
   const [form, setForm] = useState<any>(null);
-  if (isLoading) return <Page><Skeleton className="h-72" /></Page>;
-  if (isError || !data) return <Page><State error retry={refetch} /></Page>;
+  if (isLoading)
+    return (
+      <Page>
+        <Skeleton className="h-72" />
+      </Page>
+    );
+  if (isError || !data)
+    return (
+      <Page>
+        <State error retry={refetch} />
+      </Page>
+    );
   const values = form ?? data;
-  const set = (key: string, value: string) => setForm({ ...values, [key]: value });
-  return <Page className="max-w-5xl"><div className="eyebrow">Remix studio / Workspace settings</div><div className="mt-3 flex flex-col justify-between gap-5 sm:flex-row sm:items-end"><div><h1 className="serif text-4xl">Make it yours<span className="text-accent">.</span></h1><p className="mt-3 max-w-xl text-sm leading-6 text-muted-foreground">The language of your workspace travels into the client portal and provider receipts.</p></div><Button variant="yellow" disabled={!form || update.isPending} onClick={() => update.mutate({ data: values }, { onSuccess: () => { setForm(null); queryClient.invalidateQueries({ queryKey: getGetBrandSettingsQueryKey() }); } })} testId="button-save-settings">{update.isPending ? 'Saving…' : 'Save settings'}</Button></div><div className="mt-10 grid gap-8 lg:grid-cols-[1fr_.8fr]"><div className="border border-border bg-card p-6"><div className="eyebrow">Brand settings</div><div className="mt-6 grid gap-5 sm:grid-cols-2">{[['agencyName','Agency name'],['brandName','Brand name'],['currency','Currency'],['clientTerm','Client term'],['projectTerm','Project term'],['milestoneTerm','Milestone term']].map(([key, label]) => <label key={key} className="block"><span className="mono text-[10px] uppercase tracking-[.14em] text-muted-foreground">{label}</span><input data-testid={`input-${key}`} value={values[key] ?? ''} onChange={e => set(key, e.target.value)} className="mt-2 w-full border-b border-border bg-transparent px-0 py-2 text-sm outline-none focus:border-primary" /></label>)}</div><div className="mt-7 grid gap-5 sm:grid-cols-2"><label className="block"><span className="mono text-[10px] uppercase tracking-[.14em] text-muted-foreground">Primary color</span><div className="mt-2 flex gap-2"><input type="color" value={values.primaryColor} onChange={e => set('primaryColor', e.target.value)} className="h-9 w-12 border-0 bg-transparent" /><input value={values.primaryColor} onChange={e => set('primaryColor', e.target.value)} className="w-full border-b border-border bg-transparent text-sm outline-none" /></div></label><label className="block"><span className="mono text-[10px] uppercase tracking-[.14em] text-muted-foreground">Evidence color</span><div className="mt-2 flex gap-2"><input type="color" value={values.evidenceColor} onChange={e => set('evidenceColor', e.target.value)} className="h-9 w-12 border-0 bg-transparent" /><input value={values.evidenceColor} onChange={e => set('evidenceColor', e.target.value)} className="w-full border-b border-border bg-transparent text-sm outline-none" /></div></label></div></div><div className="space-y-4"><div className="border border-border bg-primary p-6 text-primary-foreground"><div className="eyebrow text-primary-foreground/60">Live preview</div><div className="mt-7 border-l-2 border-accent pl-4"><div className="mono text-[10px] uppercase tracking-[.15em] text-primary-foreground/60">{values.agencyName}</div><h2 className="serif mt-2 text-3xl">{values.brandName}<span className="text-accent">.</span></h2><p className="mt-3 text-xs leading-5 text-primary-foreground/65">A project view composed for your clients.</p></div><div className="mt-8 h-1 bg-primary-foreground/15"><div className="h-full w-3/5" style={{ backgroundColor: values.evidenceColor }} /></div></div><div className="border border-[#a9453e]/30 bg-[#f4d9d4] p-5"><div className="eyebrow text-[#8f3932]">Danger zone</div><p className="mt-2 text-xs leading-5 text-[#8f3932]">Reset the isolated demo workspace and restore its sample projects.</p><Button variant="outline" className="mt-4 border-[#a9453e]/30 text-[#8f3932]" disabled={reset.isPending} onClick={() => { if (window.confirm('Reset the demo workspace?')) reset.mutate(undefined, { onSuccess: () => window.location.reload() }); }} testId="button-reset-demo"><RotateCcw className="h-4 w-4" />Reset demo</Button></div></div></div></Page>;
+  const set = (key: string, value: string) =>
+    setForm({ ...values, [key]: value });
+  return (
+    <Page className="max-w-5xl">
+      <div className="eyebrow">Remix studio / Workspace settings</div>
+      <div className="mt-3 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
+        <div>
+          <h1 className="serif text-4xl">
+            Make it yours<span className="text-accent">.</span>
+          </h1>
+          <p className="mt-3 max-w-xl text-sm leading-6 text-muted-foreground">
+            The language of your workspace travels into the client portal and
+            provider receipts.
+          </p>
+        </div>
+        <Button
+          variant="yellow"
+          disabled={!form || update.isPending}
+          onClick={() =>
+            update.mutate(
+              { data: values },
+              {
+                onSuccess: () => {
+                  setForm(null);
+                  queryClient.invalidateQueries({
+                    queryKey: getGetBrandSettingsQueryKey(),
+                  });
+                },
+              },
+            )
+          }
+          testId="button-save-settings"
+        >
+          {update.isPending ? "Saving…" : "Save settings"}
+        </Button>
+      </div>
+      <div className="mt-10 grid gap-8 lg:grid-cols-[1fr_.8fr]">
+        <div className="border border-border bg-card p-6">
+          <div className="eyebrow">Brand settings</div>
+          <div className="mt-6 grid gap-5 sm:grid-cols-2">
+            {[
+              ["agencyName", "Agency name"],
+              ["brandName", "Brand name"],
+              ["currency", "Currency"],
+              ["clientTerm", "Client term"],
+              ["projectTerm", "Project term"],
+              ["milestoneTerm", "Milestone term"],
+            ].map(([key, label]) => (
+              <label key={key} className="block">
+                <span className="mono text-[10px] uppercase tracking-[.14em] text-muted-foreground">
+                  {label}
+                </span>
+                <input
+                  data-testid={`input-${key}`}
+                  value={values[key] ?? ""}
+                  onChange={(e) => set(key, e.target.value)}
+                  className="mt-2 w-full border-b border-border bg-transparent px-0 py-2 text-sm outline-none focus:border-primary"
+                />
+              </label>
+            ))}
+          </div>
+          <div className="mt-7 grid gap-5 sm:grid-cols-2">
+            <label className="block">
+              <span className="mono text-[10px] uppercase tracking-[.14em] text-muted-foreground">
+                Primary color
+              </span>
+              <div className="mt-2 flex gap-2">
+                <input
+                  type="color"
+                  value={values.primaryColor}
+                  onChange={(e) => set("primaryColor", e.target.value)}
+                  className="h-9 w-12 border-0 bg-transparent"
+                />
+                <input
+                  value={values.primaryColor}
+                  onChange={(e) => set("primaryColor", e.target.value)}
+                  className="w-full border-b border-border bg-transparent text-sm outline-none"
+                />
+              </div>
+            </label>
+            <label className="block">
+              <span className="mono text-[10px] uppercase tracking-[.14em] text-muted-foreground">
+                Evidence color
+              </span>
+              <div className="mt-2 flex gap-2">
+                <input
+                  type="color"
+                  value={values.evidenceColor}
+                  onChange={(e) => set("evidenceColor", e.target.value)}
+                  className="h-9 w-12 border-0 bg-transparent"
+                />
+                <input
+                  value={values.evidenceColor}
+                  onChange={(e) => set("evidenceColor", e.target.value)}
+                  className="w-full border-b border-border bg-transparent text-sm outline-none"
+                />
+              </div>
+            </label>
+          </div>
+        </div>
+        <div className="space-y-4">
+          <div className="border border-border bg-primary p-6 text-primary-foreground">
+            <div className="eyebrow text-primary-foreground/60">
+              Live preview
+            </div>
+            <div className="mt-7 border-l-2 border-accent pl-4">
+              <div className="mono text-[10px] uppercase tracking-[.15em] text-primary-foreground/60">
+                {values.agencyName}
+              </div>
+              <h2 className="serif mt-2 text-3xl">
+                {values.brandName}
+                <span className="text-accent">.</span>
+              </h2>
+              <p className="mt-3 text-xs leading-5 text-primary-foreground/65">
+                A project view composed for your clients.
+              </p>
+            </div>
+            <div className="mt-8 h-1 bg-primary-foreground/15">
+              <div
+                className="h-full w-3/5"
+                style={{ backgroundColor: values.evidenceColor }}
+              />
+            </div>
+          </div>
+          <div className="border border-[#a9453e]/30 bg-[#f4d9d4] p-5">
+            <div className="eyebrow text-[#8f3932]">Danger zone</div>
+            <p className="mt-2 text-xs leading-5 text-[#8f3932]">
+              Reset the isolated demo workspace and restore its sample projects.
+            </p>
+            <Button
+              variant="outline"
+              className="mt-4 border-[#a9453e]/30 text-[#8f3932]"
+              disabled={reset.isPending}
+              onClick={() => {
+                if (window.confirm("Reset the demo workspace?"))
+                  reset.mutate(undefined, {
+                    onSuccess: () => window.location.reload(),
+                  });
+              }}
+              testId="button-reset-demo"
+            >
+              <RotateCcw className="h-4 w-4" />
+              Reset demo
+            </Button>
+          </div>
+        </div>
+      </div>
+    </Page>
+  );
 }
 
 function DesignSystem() {
   const [toast, setToast] = useState(false);
-  return <Page className="max-w-6xl"><div className="eyebrow">Design system / Production tokens</div><h1 className="serif mt-3 text-4xl">The instrument panel<span className="text-accent">.</span></h1><p className="mt-3 max-w-xl text-sm leading-6 text-muted-foreground">A living reference for Scopefold’s editorial contract language and operational precision.</p><div className="mt-10 grid gap-8 lg:grid-cols-2"><section className="border border-border bg-card p-6"><div className="eyebrow">Color / Tide & brass</div><div className="mt-5 grid grid-cols-2 gap-3"><Swatch name="Deep tide" color="#193441" /><Swatch name="Warm paper" color="#f5f0e6" /><Swatch name="Evidence brass" color="#e7c85e" /><Swatch name="Verified green" color="#2f7665" /></div></section><section className="border border-border bg-card p-6"><div className="eyebrow">Type / Editorial utility</div><div className="mt-5"><div className="serif text-4xl">The source of truth.</div><div className="mt-4 text-sm leading-6">DM Sans keeps the console precise. <span className="mono text-xs">DM Mono labels the record.</span></div></div></section><section className="border border-border bg-card p-6"><div className="eyebrow">Controls / States</div><div className="mt-5 flex flex-wrap gap-2"><Button variant="yellow" onClick={() => setToast(true)} testId="button-system-action"><Zap className="h-4 w-4" />Primary action</Button><Button variant="outline" onClick={() => setToast(false)} testId="button-system-outline">Secondary</Button><Button variant="ghost" testId="button-system-ghost">Quiet action</Button><Badge tone="green">Verified</Badge><Badge tone="yellow">Review</Badge><Badge tone="red">Blocked</Badge></div>{toast && <div className="mt-5 flex items-center justify-between border-l-2 border-accent bg-[#fbf4d8] p-3 text-xs text-[#6d5116]">Action acknowledged <button onClick={() => setToast(false)} data-testid="button-dismiss-system"><X className="h-3 w-3" /></button></div>}</section><section className="border border-border bg-primary p-6 text-primary-foreground"><div className="eyebrow text-primary-foreground/60">Motion / Restrained</div><div className="mt-6 space-y-3"><div className="animate-in h-10 bg-primary-foreground/10 p-3 text-xs">Evidence enters before interpretation.</div><div className="animate-in delay-1 h-10 bg-primary-foreground/10 p-3 text-xs">Operations follow only after review.</div><div className="animate-in delay-2 h-10 bg-primary-foreground/10 p-3 text-xs">Receipts close the loop.</div></div></section></div></Page>;
+  return (
+    <Page className="max-w-6xl">
+      <div className="eyebrow">Design system / Production tokens</div>
+      <h1 className="serif mt-3 text-4xl">
+        The instrument panel<span className="text-accent">.</span>
+      </h1>
+      <p className="mt-3 max-w-xl text-sm leading-6 text-muted-foreground">
+        A living reference for Scopefold’s editorial contract language and
+        operational precision.
+      </p>
+      <div className="mt-10 grid gap-8 lg:grid-cols-2">
+        <section className="border border-border bg-card p-6">
+          <div className="eyebrow">Color / Tide & brass</div>
+          <div className="mt-5 grid grid-cols-2 gap-3">
+            <Swatch name="Deep tide" color="#193441" />
+            <Swatch name="Warm paper" color="#f5f0e6" />
+            <Swatch name="Evidence brass" color="#e7c85e" />
+            <Swatch name="Verified green" color="#2f7665" />
+          </div>
+        </section>
+        <section className="border border-border bg-card p-6">
+          <div className="eyebrow">Type / Editorial utility</div>
+          <div className="mt-5">
+            <div className="serif text-4xl">The source of truth.</div>
+            <div className="mt-4 text-sm leading-6">
+              DM Sans keeps the console precise.{" "}
+              <span className="mono text-xs">DM Mono labels the record.</span>
+            </div>
+          </div>
+        </section>
+        <section className="border border-border bg-card p-6">
+          <div className="eyebrow">Controls / States</div>
+          <div className="mt-5 flex flex-wrap gap-2">
+            <Button
+              variant="yellow"
+              onClick={() => setToast(true)}
+              testId="button-system-action"
+            >
+              <Zap className="h-4 w-4" />
+              Primary action
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setToast(false)}
+              testId="button-system-outline"
+            >
+              Secondary
+            </Button>
+            <Button variant="ghost" testId="button-system-ghost">
+              Quiet action
+            </Button>
+            <Badge tone="green">Verified</Badge>
+            <Badge tone="yellow">Review</Badge>
+            <Badge tone="red">Blocked</Badge>
+          </div>
+          {toast && (
+            <div className="mt-5 flex items-center justify-between border-l-2 border-accent bg-[#fbf4d8] p-3 text-xs text-[#6d5116]">
+              Action acknowledged{" "}
+              <button
+                onClick={() => setToast(false)}
+                aria-label="Dismiss notification"
+                data-testid="button-dismiss-system"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+          )}
+        </section>
+        <section className="border border-border bg-primary p-6 text-primary-foreground">
+          <div className="eyebrow text-primary-foreground/60">
+            Motion / Restrained
+          </div>
+          <div className="mt-6 space-y-3">
+            <div className="animate-in h-10 bg-primary-foreground/10 p-3 text-xs">
+              Evidence enters before interpretation.
+            </div>
+            <div className="animate-in delay-1 h-10 bg-primary-foreground/10 p-3 text-xs">
+              Operations follow only after review.
+            </div>
+            <div className="animate-in delay-2 h-10 bg-primary-foreground/10 p-3 text-xs">
+              Receipts close the loop.
+            </div>
+          </div>
+        </section>
+      </div>
+    </Page>
+  );
 }
-function Swatch({ name, color }: { name: string; color: string }) { return <div><div className="h-16 border border-border" style={{ backgroundColor: color }} /><div className="mono mt-2 text-[10px] uppercase tracking-[.1em] text-muted-foreground">{name}</div><div className="mt-1 text-xs">{color}</div></div>; }
-function NotFound() { return <div className="flex min-h-[100dvh] items-center justify-center bg-background p-6"><div className="max-w-sm text-center"><div className="eyebrow">404 / Not in the record</div><h1 className="serif mt-4 text-5xl">Nothing to prove here.</h1><p className="mt-4 text-sm leading-6 text-muted-foreground">That route does not belong to this workspace.</p><Link href="/" data-testid="link-not-found-home" className="mt-7 inline-flex"><Button variant="yellow">Return to projects <ArrowRight className="h-4 w-4" /></Button></Link></div></div>; }
-function Router() { return <ErrorBoundary resetKey={useLocation()[0]}><Switch><Route path="/" component={Projects} /><Route path="/projects" component={Projects} /><Route path="/new" component={NewContract} /><Route path="/p/:id/review" component={Review} /><Route path="/p/:id/fold" component={Fold} /><Route path="/p/:id/operations" component={Operations} /><Route path="/p/:id/launch" component={Launch} /><Route path="/portal/:token" component={Portal} /><Route path="/remix-studio" component={Remix} /><Route path="/design-system" component={DesignSystem} /><Route component={NotFound} /></Switch></ErrorBoundary>; }
-function App() { return <QueryClientProvider client={queryClient}><TooltipProvider><WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}><Switch><Route path="/portal/:token" component={Portal} /><Route path="/design-system" component={DesignSystem} /><Route path="/remix-studio" component={Remix} /><Route><Shell><Router /></Shell></Route></Switch></WouterRouter><Toaster /></TooltipProvider></QueryClientProvider>; }
+function Swatch({ name, color }: { name: string; color: string }) {
+  return (
+    <div>
+      <div
+        className="h-16 border border-border"
+        style={{ backgroundColor: color }}
+      />
+      <div className="mono mt-2 text-[10px] uppercase tracking-[.1em] text-muted-foreground">
+        {name}
+      </div>
+      <div className="mt-1 text-xs">{color}</div>
+    </div>
+  );
+}
+function NotFound() {
+  return (
+    <div className="flex min-h-[100dvh] items-center justify-center bg-background p-6">
+      <div className="max-w-sm text-center">
+        <div className="eyebrow">404 / Not in the record</div>
+        <h1 className="serif mt-4 text-5xl">Nothing to prove here.</h1>
+        <p className="mt-4 text-sm leading-6 text-muted-foreground">
+          That route does not belong to this workspace.
+        </p>
+        <Link
+          href="/"
+          data-testid="link-not-found-home"
+          className="mt-7 inline-flex"
+        >
+          <Button variant="yellow">
+            Return to projects <ArrowRight className="h-4 w-4" />
+          </Button>
+        </Link>
+      </div>
+    </div>
+  );
+}
+function Router() {
+  return (
+    <ErrorBoundary resetKey={useLocation()[0]}>
+      <Switch>
+        <Route path="/" component={Projects} />
+        <Route path="/projects" component={Projects} />
+        <Route path="/new" component={NewContract} />
+        <Route path="/p/:id/review" component={Review} />
+        <Route path="/p/:id/fold" component={Fold} />
+        <Route path="/p/:id/operations" component={Operations} />
+        <Route path="/p/:id/launch" component={Launch} />
+        <Route path="/portal/:token" component={Portal} />
+        <Route path="/remix-studio" component={Remix} />
+        <Route path="/design-system" component={DesignSystem} />
+        <Route component={NotFound} />
+      </Switch>
+    </ErrorBoundary>
+  );
+}
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+          <Switch>
+            <Route path="/portal/:token" component={Portal} />
+            <Route path="/design-system" component={DesignSystem} />
+            <Route path="/remix-studio" component={Remix} />
+            <Route>
+              <Shell>
+                <Router />
+              </Shell>
+            </Route>
+          </Switch>
+        </WouterRouter>
+        <Toaster />
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+}
 export default App;

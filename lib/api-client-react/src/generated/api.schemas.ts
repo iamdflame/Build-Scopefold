@@ -87,8 +87,18 @@ export interface Operation {
   detail?: string;
 }
 
+export type FoldPreviewMappingsItem = {
+  evidenceId: string;
+  sourceLabel: string;
+  sourceQuote: string;
+  operationId: string;
+  operationTitle: string;
+  operationType: string;
+};
+
 export interface FoldPreview {
   blocked: boolean;
+  committed: boolean;
   milestones: number;
   tasks: number;
   payments: number;
@@ -97,6 +107,8 @@ export interface FoldPreview {
   risks: string[];
   revisionPlan: string;
   evidenceCompleteness: number;
+  mappings: FoldPreviewMappingsItem[];
+  generatedOperations: Operation[];
 }
 
 export interface FoldResult {
@@ -107,6 +119,7 @@ export interface FoldResult {
 
 export interface Receipt {
   id: string;
+  projectId: string;
   provider: string;
   mode: string;
   action: string;
@@ -114,6 +127,9 @@ export interface Receipt {
   timestamp: string;
   sourceQuote: string;
   page: number;
+  objectCount: number;
+  objectIds: string[];
+  idempotencyKey: string;
   /** @nullable */
   externalUrl?: string | null;
   proof: string[];
@@ -130,6 +146,7 @@ export interface OperationsWorkspace {
   milestones: Operation[];
   operations: Operation[];
   receipts: Receipt[];
+  evidence: Evidence[];
 }
 
 export interface Provider {
@@ -145,9 +162,20 @@ export interface LaunchPreflight {
   project: Project;
   providers: Provider[];
   blocked: boolean;
+  receipts: Receipt[];
 }
 
+export type LaunchInputProvider = typeof LaunchInputProvider[keyof typeof LaunchInputProvider];
+
+
+export const LaunchInputProvider = {
+  Stripe: 'Stripe',
+  Resend: 'Resend',
+  Linear: 'Linear',
+} as const;
+
 export interface LaunchInput {
+  provider: LaunchInputProvider;
   /** @minLength 8 */
   idempotencyKey: string;
 }
@@ -163,6 +191,19 @@ export interface PortalView {
   payments: Operation[];
   approvals: Operation[];
   files: string[];
+  receipts: Receipt[];
+}
+
+export interface PortalApprovalInput {
+  approvalId: string;
+  /** @minLength 8 */
+  idempotencyKey: string;
+}
+
+export interface PortalApprovalResult {
+  project: Project;
+  approval: Operation;
+  receipt: Receipt;
 }
 
 export interface BrandSettings {

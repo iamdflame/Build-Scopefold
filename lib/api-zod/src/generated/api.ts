@@ -114,6 +114,7 @@ export const GetProjectResponse = zod.object({
 })),
   "receipts": zod.array(zod.object({
   "id": zod.string(),
+  "projectId": zod.string(),
   "provider": zod.string(),
   "mode": zod.string(),
   "action": zod.string(),
@@ -121,6 +122,9 @@ export const GetProjectResponse = zod.object({
   "timestamp": zod.string(),
   "sourceQuote": zod.string(),
   "page": zod.number(),
+  "objectCount": zod.number(),
+  "objectIds": zod.array(zod.string()),
+  "idempotencyKey": zod.string(),
   "externalUrl": zod.string().nullish(),
   "proof": zod.array(zod.string())
 }))
@@ -257,6 +261,7 @@ export const GetFoldPreviewParams = zod.object({
 
 export const GetFoldPreviewResponse = zod.object({
   "blocked": zod.boolean(),
+  "committed": zod.boolean(),
   "milestones": zod.number(),
   "tasks": zod.number(),
   "payments": zod.number(),
@@ -264,7 +269,25 @@ export const GetFoldPreviewResponse = zod.object({
   "dependencies": zod.number(),
   "risks": zod.array(zod.string()),
   "revisionPlan": zod.string(),
-  "evidenceCompleteness": zod.number()
+  "evidenceCompleteness": zod.number(),
+  "mappings": zod.array(zod.object({
+  "evidenceId": zod.string(),
+  "sourceLabel": zod.string(),
+  "sourceQuote": zod.string(),
+  "operationId": zod.string(),
+  "operationTitle": zod.string(),
+  "operationType": zod.string()
+})),
+  "generatedOperations": zod.array(zod.object({
+  "id": zod.string(),
+  "title": zod.string(),
+  "type": zod.string(),
+  "status": zod.string(),
+  "sourceEvidenceId": zod.string(),
+  "dueDate": zod.string().nullish(),
+  "amountCents": zod.number().nullish(),
+  "detail": zod.string().optional()
+}))
 })
 
 
@@ -303,6 +326,7 @@ export const CommitFoldResponse = zod.object({
 })),
   "preview": zod.object({
   "blocked": zod.boolean(),
+  "committed": zod.boolean(),
   "milestones": zod.number(),
   "tasks": zod.number(),
   "payments": zod.number(),
@@ -310,7 +334,25 @@ export const CommitFoldResponse = zod.object({
   "dependencies": zod.number(),
   "risks": zod.array(zod.string()),
   "revisionPlan": zod.string(),
-  "evidenceCompleteness": zod.number()
+  "evidenceCompleteness": zod.number(),
+  "mappings": zod.array(zod.object({
+  "evidenceId": zod.string(),
+  "sourceLabel": zod.string(),
+  "sourceQuote": zod.string(),
+  "operationId": zod.string(),
+  "operationTitle": zod.string(),
+  "operationType": zod.string()
+})),
+  "generatedOperations": zod.array(zod.object({
+  "id": zod.string(),
+  "title": zod.string(),
+  "type": zod.string(),
+  "status": zod.string(),
+  "sourceEvidenceId": zod.string(),
+  "dueDate": zod.string().nullish(),
+  "amountCents": zod.number().nullish(),
+  "detail": zod.string().optional()
+}))
 })
 })
 
@@ -360,6 +402,7 @@ export const GetOperationsResponse = zod.object({
 })),
   "receipts": zod.array(zod.object({
   "id": zod.string(),
+  "projectId": zod.string(),
   "provider": zod.string(),
   "mode": zod.string(),
   "action": zod.string(),
@@ -367,8 +410,20 @@ export const GetOperationsResponse = zod.object({
   "timestamp": zod.string(),
   "sourceQuote": zod.string(),
   "page": zod.number(),
+  "objectCount": zod.number(),
+  "objectIds": zod.array(zod.string()),
+  "idempotencyKey": zod.string(),
   "externalUrl": zod.string().nullish(),
   "proof": zod.array(zod.string())
+})),
+  "evidence": zod.array(zod.object({
+  "id": zod.string(),
+  "clause": zod.string(),
+  "page": zod.number(),
+  "quote": zod.string(),
+  "classification": zod.string(),
+  "source": zod.string(),
+  "reviewed": zod.boolean().optional()
 }))
 })
 
@@ -404,7 +459,23 @@ export const GetLaunchPreflightResponse = zod.object({
   "destination": zod.string().optional(),
   "objectCount": zod.number().optional()
 })),
-  "blocked": zod.boolean()
+  "blocked": zod.boolean(),
+  "receipts": zod.array(zod.object({
+  "id": zod.string(),
+  "projectId": zod.string(),
+  "provider": zod.string(),
+  "mode": zod.string(),
+  "action": zod.string(),
+  "status": zod.string(),
+  "timestamp": zod.string(),
+  "sourceQuote": zod.string(),
+  "page": zod.number(),
+  "objectCount": zod.number(),
+  "objectIds": zod.array(zod.string()),
+  "idempotencyKey": zod.string(),
+  "externalUrl": zod.string().nullish(),
+  "proof": zod.array(zod.string())
+}))
 })
 
 
@@ -420,6 +491,7 @@ export const launchProjectBodyIdempotencyKeyMin = 8;
 
 
 export const LaunchProjectBody = zod.object({
+  "provider": zod.enum(['Stripe', 'Resend', 'Linear']),
   "idempotencyKey": zod.string().min(launchProjectBodyIdempotencyKeyMin)
 })
 
@@ -427,6 +499,7 @@ export const LaunchProjectResponse = zod.object({
   "status": zod.string(),
   "receipts": zod.array(zod.object({
   "id": zod.string(),
+  "projectId": zod.string(),
   "provider": zod.string(),
   "mode": zod.string(),
   "action": zod.string(),
@@ -434,6 +507,9 @@ export const LaunchProjectResponse = zod.object({
   "timestamp": zod.string(),
   "sourceQuote": zod.string(),
   "page": zod.number(),
+  "objectCount": zod.number(),
+  "objectIds": zod.array(zod.string()),
+  "idempotencyKey": zod.string(),
   "externalUrl": zod.string().nullish(),
   "proof": zod.array(zod.string())
 }))
@@ -493,7 +569,84 @@ export const GetPortalResponse = zod.object({
   "amountCents": zod.number().nullish(),
   "detail": zod.string().optional()
 })),
-  "files": zod.array(zod.string())
+  "files": zod.array(zod.string()),
+  "receipts": zod.array(zod.object({
+  "id": zod.string(),
+  "projectId": zod.string(),
+  "provider": zod.string(),
+  "mode": zod.string(),
+  "action": zod.string(),
+  "status": zod.string(),
+  "timestamp": zod.string(),
+  "sourceQuote": zod.string(),
+  "page": zod.number(),
+  "objectCount": zod.number(),
+  "objectIds": zod.array(zod.string()),
+  "idempotencyKey": zod.string(),
+  "externalUrl": zod.string().nullish(),
+  "proof": zod.array(zod.string())
+}))
+})
+
+
+/**
+ * @summary Approve a client-facing operational approval
+ */
+export const ApprovePortalParams = zod.object({
+  "projectId": zod.coerce.string()
+})
+
+export const approvePortalBodyIdempotencyKeyMin = 8;
+
+
+
+export const ApprovePortalBody = zod.object({
+  "approvalId": zod.string(),
+  "idempotencyKey": zod.string().min(approvePortalBodyIdempotencyKeyMin)
+})
+
+export const ApprovePortalResponse = zod.object({
+  "project": zod.object({
+  "id": zod.string(),
+  "client": zod.object({
+  "id": zod.string(),
+  "name": zod.string()
+}),
+  "name": zod.string(),
+  "valueCents": zod.number(),
+  "currency": zod.string(),
+  "lifecycle": zod.string(),
+  "progress": zod.number(),
+  "evidenceCompleteness": zod.number(),
+  "nextEvent": zod.string(),
+  "risk": zod.string()
+}),
+  "approval": zod.object({
+  "id": zod.string(),
+  "title": zod.string(),
+  "type": zod.string(),
+  "status": zod.string(),
+  "sourceEvidenceId": zod.string(),
+  "dueDate": zod.string().nullish(),
+  "amountCents": zod.number().nullish(),
+  "detail": zod.string().optional()
+}),
+  "receipt": zod.object({
+  "id": zod.string(),
+  "projectId": zod.string(),
+  "provider": zod.string(),
+  "mode": zod.string(),
+  "action": zod.string(),
+  "status": zod.string(),
+  "timestamp": zod.string(),
+  "sourceQuote": zod.string(),
+  "page": zod.number(),
+  "objectCount": zod.number(),
+  "objectIds": zod.array(zod.string()),
+  "idempotencyKey": zod.string(),
+  "externalUrl": zod.string().nullish(),
+  "proof": zod.array(zod.string())
+})
 })
 
 

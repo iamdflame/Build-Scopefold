@@ -8,6 +8,7 @@
 
 export interface Receipt {
   id: string;
+  projectId: string;
   provider: string;
   mode: string;
   action: string;
@@ -15,6 +16,9 @@ export interface Receipt {
   timestamp: string;
   sourceQuote: string;
   page: number;
+  objectCount: number;
+  objectIds: string[];
+  idempotencyKey: string;
   /** @nullable */
   externalUrl?: string | null;
   proof: string[];

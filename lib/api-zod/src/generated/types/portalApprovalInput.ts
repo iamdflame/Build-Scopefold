@@ -5,10 +5,9 @@
  * Scopefold provenance-first operations API
  * OpenAPI spec version: 0.1.0
  */
-import type { LaunchInputProvider } from './launchInputProvider';
 
-export interface LaunchInput {
-  provider: LaunchInputProvider;
+export interface PortalApprovalInput {
+  approvalId: string;
   /** @minLength 8 */
   idempotencyKey: string;
 }

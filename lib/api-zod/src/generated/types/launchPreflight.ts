@@ -7,9 +7,11 @@
  */
 import type { Project } from './project';
 import type { Provider } from './provider';
+import type { Receipt } from './receipt';
 
 export interface LaunchPreflight {
   project: Project;
   providers: Provider[];
   blocked: boolean;
+  receipts: Receipt[];
 }

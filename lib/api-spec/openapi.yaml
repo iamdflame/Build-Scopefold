@@ -197,6 +197,24 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/PortalView" }
+  /v1/projects/{projectId}/portal/approval:
+    post:
+      operationId: approvePortal
+      tags: [portal]
+      summary: Approve a client-facing operational approval
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PortalApprovalInput" }
+      responses:
+        "200":
+          description: Persisted client approval and receipt
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PortalApprovalResult" }
   /v1/settings:
     get:
       operationId: getBrandSettings
@@ -257,7 +275,19 @@ components:
         name: { type: string }
     Project:
       type: object
-      required: [id, client, name, valueCents, currency, lifecycle, progress, evidenceCompleteness, nextEvent, risk]
+      required:
+        [
+          id,
+          client,
+          name,
+          valueCents,
+          currency,
+          lifecycle,
+          progress,
+          evidenceCompleteness,
+          nextEvent,
+          risk,
+        ]
       properties:
         id: { type: string }
         client: { $ref: "#/components/schemas/Client" }
@@ -311,14 +341,25 @@ components:
         resolved: { type: ["string", "null"] }
     ReviewWorkspace:
       type: object
-      required: [project, documentName, documentText, evidence, obligations, ambiguities]
+      required:
+        [
+          project,
+          documentName,
+          documentText,
+          evidence,
+          obligations,
+          ambiguities,
+        ]
       properties:
         project: { $ref: "#/components/schemas/Project" }
         documentName: { type: string }
         documentText: { type: string }
-        evidence: { type: array, items: { $ref: "#/components/schemas/Evidence" } }
-        obligations: { type: array, items: { $ref: "#/components/schemas/Obligation" } }
-        ambiguities: { type: array, items: { $ref: "#/components/schemas/Ambiguity" } }
+        evidence:
+          { type: array, items: { $ref: "#/components/schemas/Evidence" } }
+        obligations:
+          { type: array, items: { $ref: "#/components/schemas/Obligation" } }
+        ambiguities:
+          { type: array, items: { $ref: "#/components/schemas/Ambiguity" } }
     Operation:
       type: object
       required: [id, title, type, status, sourceEvidenceId]
@@ -333,9 +374,24 @@ components:
         detail: { type: string }
     FoldPreview:
       type: object
-      required: [blocked, milestones, tasks, payments, approvals, dependencies, risks, revisionPlan, evidenceCompleteness]
+      required:
+        [
+          blocked,
+          committed,
+          milestones,
+          tasks,
+          payments,
+          approvals,
+          dependencies,
+          risks,
+          revisionPlan,
+          evidenceCompleteness,
+          mappings,
+          generatedOperations,
+        ]
       properties:
         blocked: { type: boolean }
+        committed: { type: boolean }
         milestones: { type: number }
         tasks: { type: number }
         payments: { type: number }
@@ -344,28 +400,58 @@ components:
         risks: { type: array, items: { type: string } }
         revisionPlan: { type: string }
         evidenceCompleteness: { type: number }
+        mappings:
+          type: array
+          items:
+            type: object
+            required:
+              [
+                evidenceId,
+                sourceLabel,
+                sourceQuote,
+                operationId,
+                operationTitle,
+                operationType,
+              ]
+            properties:
+              evidenceId: { type: string }
+              sourceLabel: { type: string }
+              sourceQuote: { type: string }
+              operationId: { type: string }
+              operationTitle: { type: string }
+              operationType: { type: string }
+        generatedOperations:
+          { type: array, items: { $ref: "#/components/schemas/Operation" } }
     FoldResult:
       type: object
       required: [project, operations, preview]
       properties:
         project: { $ref: "#/components/schemas/Project" }
-        operations: { type: array, items: { $ref: "#/components/schemas/Operation" } }
+        operations:
+          { type: array, items: { $ref: "#/components/schemas/Operation" } }
         preview: { $ref: "#/components/schemas/FoldPreview" }
     ProjectDetail:
       type: object
       required: [project, operations, receipts]
       properties:
         project: { $ref: "#/components/schemas/Project" }
-        operations: { type: array, items: { $ref: "#/components/schemas/Operation" } }
-        receipts: { type: array, items: { $ref: "#/components/schemas/Receipt" } }
+        operations:
+          { type: array, items: { $ref: "#/components/schemas/Operation" } }
+        receipts:
+          { type: array, items: { $ref: "#/components/schemas/Receipt" } }
     OperationsWorkspace:
       type: object
-      required: [project, milestones, operations, receipts]
+      required: [project, milestones, operations, receipts, evidence]
       properties:
         project: { $ref: "#/components/schemas/Project" }
-        milestones: { type: array, items: { $ref: "#/components/schemas/Operation" } }
-        operations: { type: array, items: { $ref: "#/components/schemas/Operation" } }
-        receipts: { type: array, items: { $ref: "#/components/schemas/Receipt" } }
+        milestones:
+          { type: array, items: { $ref: "#/components/schemas/Operation" } }
+        operations:
+          { type: array, items: { $ref: "#/components/schemas/Operation" } }
+        receipts:
+          { type: array, items: { $ref: "#/components/schemas/Receipt" } }
+        evidence:
+          { type: array, items: { $ref: "#/components/schemas/Evidence" } }
     Provider:
       type: object
       required: [name, mode, state, action]
@@ -378,21 +464,43 @@ components:
         objectCount: { type: number }
     LaunchPreflight:
       type: object
-      required: [project, providers, blocked]
+      required: [project, providers, blocked, receipts]
       properties:
         project: { $ref: "#/components/schemas/Project" }
-        providers: { type: array, items: { $ref: "#/components/schemas/Provider" } }
+        providers:
+          { type: array, items: { $ref: "#/components/schemas/Provider" } }
         blocked: { type: boolean }
+        receipts:
+          { type: array, items: { $ref: "#/components/schemas/Receipt" } }
     LaunchInput:
       type: object
-      required: [idempotencyKey]
+      required: [provider, idempotencyKey]
       properties:
+        provider:
+          type: string
+          enum: [Stripe, Resend, Linear]
         idempotencyKey: { type: string, minLength: 8 }
     Receipt:
       type: object
-      required: [id, provider, mode, action, status, timestamp, sourceQuote, page, proof]
+      required:
+        [
+          id,
+          projectId,
+          provider,
+          mode,
+          action,
+          status,
+          timestamp,
+          sourceQuote,
+          page,
+          proof,
+          objectCount,
+          objectIds,
+          idempotencyKey,
+        ]
       properties:
         id: { type: string }
+        projectId: { type: string }
         provider: { type: string }
         mode: { type: string }
         action: { type: string }
@@ -400,6 +508,9 @@ components:
         timestamp: { type: string }
         sourceQuote: { type: string }
         page: { type: number }
+        objectCount: { type: number }
+        objectIds: { type: array, items: { type: string } }
+        idempotencyKey: { type: string }
         externalUrl: { type: ["string", "null"] }
         proof: { type: array, items: { type: string } }
     LaunchResult:
@@ -407,19 +518,48 @@ components:
       required: [status, receipts]
       properties:
         status: { type: string }
-        receipts: { type: array, items: { $ref: "#/components/schemas/Receipt" } }
+        receipts:
+          { type: array, items: { $ref: "#/components/schemas/Receipt" } }
     PortalView:
       type: object
-      required: [project, milestones, payments, approvals, files]
+      required: [project, milestones, payments, approvals, files, receipts]
       properties:
         project: { $ref: "#/components/schemas/Project" }
-        milestones: { type: array, items: { $ref: "#/components/schemas/Operation" } }
-        payments: { type: array, items: { $ref: "#/components/schemas/Operation" } }
-        approvals: { type: array, items: { $ref: "#/components/schemas/Operation" } }
+        milestones:
+          { type: array, items: { $ref: "#/components/schemas/Operation" } }
+        payments:
+          { type: array, items: { $ref: "#/components/schemas/Operation" } }
+        approvals:
+          { type: array, items: { $ref: "#/components/schemas/Operation" } }
         files: { type: array, items: { type: string } }
+        receipts:
+          { type: array, items: { $ref: "#/components/schemas/Receipt" } }
+    PortalApprovalInput:
+      type: object
+      required: [approvalId, idempotencyKey]
+      properties:
+        approvalId: { type: string }
+        idempotencyKey: { type: string, minLength: 8 }
+    PortalApprovalResult:
+      type: object
+      required: [project, approval, receipt]
+      properties:
+        project: { $ref: "#/components/schemas/Project" }
+        approval: { $ref: "#/components/schemas/Operation" }
+        receipt: { $ref: "#/components/schemas/Receipt" }
     BrandSettings:
       type: object
-      required: [agencyName, brandName, primaryColor, evidenceColor, currency, clientTerm, projectTerm, milestoneTerm]
+      required:
+        [
+          agencyName,
+          brandName,
+          primaryColor,
+          evidenceColor,
+          currency,
+          clientTerm,
+          projectTerm,
+          milestoneTerm,
+        ]
       properties:
         agencyName: { type: string }
         brandName: { type: string }
@@ -456,6 +596,6 @@ components:
           properties:
             name: { type: string }
             mode: { type: string }
-        projects: { type: array, items: { $ref: "#/components/schemas/Project" } }
+        projects:
+          { type: array, items: { $ref: "#/components/schemas/Project" } }
         settings: { $ref: "#/components/schemas/BrandSettings" }
-
